@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
 import MonacoEditor from '@monaco-editor/react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from './components/ui/button';
@@ -17,9 +16,9 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 function App() {
-  const [socket, setSocket] = useState(null);
+  const [eventSource, setEventSource] = useState(null);
   const [roomId, setRoomId] = useState('');
-  const [userId, setUserId] = useState('');
+  const [userId, setUserId] = useState(() => `user_${Math.random().toString(36).substr(2, 8)}`);
   const [roomName, setRoomName] = useState('');
   const [code, setCode] = useState('// Welcome to Real-Time Code Editor!\n// Create a new room or join an existing one to start collaborating.\n\nconsole.log("Hello, World!");');
   const [language, setLanguage] = useState('javascript');
@@ -30,12 +29,13 @@ function App() {
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomLanguage, setNewRoomLanguage] = useState('javascript');
   const [joinRoomId, setJoinRoomId] = useState('');
-  const [statusMessage, setStatusMessage] = useState('');
+  const [statusMessage, setStatusMessage] = useState('Ready to connect');
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
   const [isJoinRoomOpen, setIsJoinRoomOpen] = useState(false);
   
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
+  const codeUpdateTimeoutRef = useRef(null);
 
   const languages = [
     { value: 'javascript', label: 'JavaScript' },
@@ -47,75 +47,91 @@ function App() {
   ];
 
   useEffect(() => {
-    // Initialize socket connection
-    const newSocket = io(BACKEND_URL, {
-      path: '/api/socket.io/',
-      transports: ['websocket', 'polling']
-    });
-
-    newSocket.on('connect', () => {
-      console.log('Connected to server');
-      setIsConnected(true);
-      setStatusMessage('Connected to server');
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('Disconnected from server');
-      setIsConnected(false);
-      setIsInRoom(false);
-      setStatusMessage('Disconnected from server');
-    });
-
-    newSocket.on('room_joined', (data) => {
-      setRoomId(data.room_id);
-      setRoomName(data.room_name);
-      setCode(data.code);
-      setLanguage(data.language);
-      setUserId(data.user_id);
-      setConnectedUsers(data.users);
-      setIsInRoom(true);
-      setStatusMessage(`Joined room: ${data.room_name}`);
-      setIsCreateRoomOpen(false);
-      setIsJoinRoomOpen(false);
-    });
-
-    newSocket.on('user_joined', (data) => {
-      setConnectedUsers(data.users);
-      setStatusMessage(`${data.user_id} joined the room`);
-    });
-
-    newSocket.on('user_left', (data) => {
-      setConnectedUsers(data.users);
-      setStatusMessage(`${data.user_id} left the room`);
-    });
-
-    newSocket.on('code_updated', (data) => {
-      if (data.user_id !== userId) {
-        setCode(data.code);
-      }
-    });
-
-    newSocket.on('cursor_updated', (data) => {
-      setCursors(prev => ({
-        ...prev,
-        [data.user_id]: data.position
-      }));
-    });
-
-    newSocket.on('file_saved', (data) => {
-      setStatusMessage(data.message);
-    });
-
-    newSocket.on('error', (data) => {
-      setStatusMessage(`Error: ${data.message}`);
-    });
-
-    setSocket(newSocket);
+    // Initialize SSE connection when user joins a room
+    if (isInRoom && roomId) {
+      setupSSEConnection();
+    }
 
     return () => {
-      newSocket.close();
+      if (eventSource) {
+        eventSource.close();
+      }
     };
-  }, []);
+  }, [isInRoom, roomId, userId]);
+
+  const setupSSEConnection = () => {
+    if (eventSource) {
+      eventSource.close();
+    }
+
+    const newEventSource = new EventSource(`${API}/sse/${userId}`);
+    
+    newEventSource.onopen = () => {
+      console.log('SSE connection opened');
+      setIsConnected(true);
+      setStatusMessage('Connected to server');
+    };
+
+    newEventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleSSEMessage(data);
+      } catch (error) {
+        console.error('Error parsing SSE message:', error);
+      }
+    };
+
+    newEventSource.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      setIsConnected(false);
+      setStatusMessage('Connection error - attempting to reconnect...');
+      
+      // Attempt to reconnect after a delay
+      setTimeout(() => {
+        if (isInRoom) {
+          setupSSEConnection();
+        }
+      }, 5000);
+    };
+
+    setEventSource(newEventSource);
+  };
+
+  const handleSSEMessage = (message) => {
+    const { type, data } = message;
+
+    switch (type) {
+      case 'ping':
+        // Keep-alive ping, no action needed
+        break;
+      
+      case 'user_joined':
+        setConnectedUsers(data.users);
+        setStatusMessage(`${data.user_id} joined the room`);
+        break;
+      
+      case 'user_left':
+        setConnectedUsers(data.users);
+        setStatusMessage(`${data.user_id} left the room`);
+        break;
+      
+      case 'code_updated':
+        if (data.user_id !== userId) {
+          setCode(data.code);
+        }
+        break;
+      
+      case 'cursor_updated':
+        setCursors(prev => ({
+          ...prev,
+          [data.user_id]: data.position
+        }));
+        break;
+      
+      default:
+        console.log('Unknown SSE message type:', type);
+    }
+  };
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -123,20 +139,53 @@ function App() {
 
     // Handle cursor position changes
     editor.onDidChangeCursorPosition((e) => {
-      if (socket && isInRoom) {
+      if (isInRoom) {
         const position = {
           line: e.position.lineNumber,
           column: e.position.column
         };
-        socket.emit('cursor_change', { position });
+        updateCursor(position);
       }
     });
   };
 
   const handleCodeChange = (value) => {
     setCode(value);
-    if (socket && isInRoom) {
-      socket.emit('code_change', { code: value });
+    
+    if (isInRoom) {
+      // Debounce code updates to avoid too many requests
+      if (codeUpdateTimeoutRef.current) {
+        clearTimeout(codeUpdateTimeoutRef.current);
+      }
+      
+      codeUpdateTimeoutRef.current = setTimeout(() => {
+        updateCode(value);
+      }, 300); // 300ms debounce
+    }
+  };
+
+  const updateCode = async (newCode) => {
+    try {
+      await axios.post(`${API}/rooms/code`, {
+        room_id: roomId,
+        code: newCode,
+        user_id: userId
+      });
+    } catch (error) {
+      console.error('Error updating code:', error);
+      setStatusMessage('Failed to sync code changes');
+    }
+  };
+
+  const updateCursor = async (position) => {
+    try {
+      await axios.post(`${API}/rooms/cursor`, {
+        room_id: roomId,
+        user_id: userId,
+        position: position
+      });
+    } catch (error) {
+      console.error('Error updating cursor:', error);
     }
   };
 
@@ -153,37 +202,68 @@ function App() {
       });
 
       const roomData = response.data;
-      if (socket) {
-        socket.emit('join_room', { room_id: roomData.id });
-      }
+      await joinRoom(roomData.id);
     } catch (error) {
       console.error('Error creating room:', error);
       setStatusMessage('Failed to create room');
     }
   };
 
-  const joinRoom = () => {
-    if (!joinRoomId.trim()) {
+  const joinRoom = async (targetRoomId = null) => {
+    const roomIdToJoin = targetRoomId || joinRoomId;
+    
+    if (!roomIdToJoin.trim()) {
       setStatusMessage('Please enter a room ID');
       return;
     }
 
-    if (socket) {
-      socket.emit('join_room', { room_id: joinRoomId });
+    try {
+      const response = await axios.post(`${API}/rooms/join`, {
+        room_id: roomIdToJoin,
+        user_id: userId
+      });
+
+      const data = response.data;
+      
+      if (data.error) {
+        setStatusMessage(data.error);
+        return;
+      }
+
+      setRoomId(data.room_id);
+      setRoomName(data.room_name);
+      setCode(data.code);
+      setLanguage(data.language);
+      setConnectedUsers(data.users);
+      setIsInRoom(true);
+      setStatusMessage(`Joined room: ${data.room_name}`);
+      setIsCreateRoomOpen(false);
+      setIsJoinRoomOpen(false);
+      setJoinRoomId('');
+      setNewRoomName('');
+    } catch (error) {
+      console.error('Error joining room:', error);
+      setStatusMessage('Failed to join room');
     }
   };
 
-  const saveFile = () => {
-    if (socket && isInRoom) {
-      socket.emit('save_file', {});
+  const saveFile = async () => {
+    if (!isInRoom) return;
+
+    try {
+      await axios.post(`${API}/rooms/${roomId}/save`);
+      setStatusMessage('File saved successfully');
+    } catch (error) {
+      console.error('Error saving file:', error);
+      setStatusMessage('Failed to save file');
     }
   };
 
-  const resetCode = () => {
+  const resetCode = async () => {
     const defaultCode = getDefaultCodeForLanguage(language);
     setCode(defaultCode);
-    if (socket && isInRoom) {
-      socket.emit('code_change', { code: defaultCode });
+    if (isInRoom) {
+      await updateCode(defaultCode);
     }
   };
 
@@ -233,12 +313,12 @@ function App() {
     }
   };
 
-  const handleLanguageChange = (newLanguage) => {
+  const handleLanguageChange = async (newLanguage) => {
     setLanguage(newLanguage);
     const defaultCode = getDefaultCodeForLanguage(newLanguage);
     setCode(defaultCode);
-    if (socket && isInRoom) {
-      socket.emit('code_change', { code: defaultCode });
+    if (isInRoom) {
+      await updateCode(defaultCode);
     }
   };
 
@@ -306,7 +386,7 @@ function App() {
                     value={joinRoomId}
                     onChange={(e) => setJoinRoomId(e.target.value)}
                   />
-                  <Button onClick={joinRoom} className="w-full">
+                  <Button onClick={() => joinRoom()} className="w-full">
                     Join Room
                   </Button>
                 </div>
