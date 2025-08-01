@@ -277,9 +277,43 @@ function App() {
     document.body.removeChild(element);
   };
 
-  const copyRoomId = () => {
-    navigator.clipboard.writeText(roomId);
-    setStatusMessage('Room ID copied to clipboard');
+  const copyRoomId = async () => {
+    try {
+      await navigator.clipboard.writeText(roomId);
+      setStatusMessage('Room ID copied to clipboard');
+    } catch (error) {
+      console.error('Clipboard write failed:', error);
+      // Fallback method for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = roomId;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setStatusMessage('Room ID copied to clipboard');
+      } catch (err) {
+        console.error('Fallback copy failed:', err);
+        setStatusMessage(`Room ID: ${roomId} (click to select)`);
+        // Show the room ID in a selectable format
+        const roomIdDisplay = document.createElement('div');
+        roomIdDisplay.style.position = 'fixed';
+        roomIdDisplay.style.top = '50%';
+        roomIdDisplay.style.left = '50%';
+        roomIdDisplay.style.transform = 'translate(-50%, -50%)';
+        roomIdDisplay.style.background = 'white';
+        roomIdDisplay.style.padding = '20px';
+        roomIdDisplay.style.border = '2px solid #000';
+        roomIdDisplay.style.zIndex = '10000';
+        roomIdDisplay.style.color = 'black';
+        roomIdDisplay.innerHTML = `<p>Copy this Room ID:</p><strong style="user-select: all;">${roomId}</strong><br><button onclick="this.parentElement.remove()">Close</button>`;
+        document.body.appendChild(roomIdDisplay);
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   const getDefaultCodeForLanguage = (lang) => {
