@@ -247,9 +247,6 @@ async def save_file(sid, data):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Mount Socket.IO app
-socket_app = socketio.ASGIApp(sio, app)
-
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -269,5 +266,5 @@ logger = logging.getLogger(__name__)
 async def shutdown_db_client():
     client.close()
 
-# Create the final app for deployment
-app = socket_app
+# Mount Socket.IO app - this creates the final combined app
+app = socketio.ASGIApp(sio, app)
