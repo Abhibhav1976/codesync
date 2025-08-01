@@ -1,34 +1,135 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+.App {
+  min-height: 100vh;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Custom scrollbar for Monaco Editor */
+.monaco-editor .scroll-decoration {
+  box-shadow: none !important;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+/* Enhance the editor container */
+.monaco-editor {
+  border-radius: 8px;
 }
 
-.App-link {
-    color: #61dafb;
+/* Custom cursor styles for collaborative editing */
+.monaco-editor .cursor {
+  border-left: 2px solid #007acc;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.monaco-editor .cursor.remote-cursor-1 {
+  border-left-color: #ff6b6b;
+}
+
+.monaco-editor .cursor.remote-cursor-2 {
+  border-left-color: #4ecdc4;
+}
+
+.monaco-editor .cursor.remote-cursor-3 {
+  border-left-color: #45b7d1;
+}
+
+.monaco-editor .cursor.remote-cursor-4 {
+  border-left-color: #f9ca24;
+}
+
+/* Status indicator animations */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.status-connected {
+  animation: pulse 2s infinite;
+}
+
+/* Button hover effects */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Gradient background animation */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Monaco Editor theme customizations */
+.monaco-editor .margin {
+  background-color: #1e293b !important;
+}
+
+.monaco-editor .monaco-editor-background {
+  background-color: #1e293b !important;
+}
+
+/* Custom selection colors */
+.monaco-editor .selected-text {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .monaco-editor {
+    font-size: 12px;
+  }
+}
+
+/* Loading spinner for editor */
+.editor-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: #1e293b;
+  color: #94a3b8;
+}
+
+.editor-loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid #475569;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
