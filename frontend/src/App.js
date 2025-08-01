@@ -64,16 +64,18 @@ function App() {
       eventSource.close();
     }
 
+    console.log(`Setting up SSE connection for user: ${userId}`);
     const newEventSource = new EventSource(`${API}/sse/${userId}`);
     
-    newEventSource.onopen = () => {
-      console.log('SSE connection opened');
+    newEventSource.onopen = (event) => {
+      console.log('SSE connection opened:', event);
       setIsConnected(true);
-      setStatusMessage('Connected to server');
+      setStatusMessage('Connected to real-time server');
     };
 
     newEventSource.onmessage = (event) => {
       try {
+        console.log('SSE message received:', event.data);
         const data = JSON.parse(event.data);
         handleSSEMessage(data);
       } catch (error) {
@@ -83,12 +85,14 @@ function App() {
 
     newEventSource.onerror = (error) => {
       console.error('SSE connection error:', error);
+      console.log('SSE readyState:', newEventSource.readyState);
       setIsConnected(false);
       setStatusMessage('Connection error - attempting to reconnect...');
       
-      // Attempt to reconnect after a delay
+      // Attempt to reconnect after a delay if still in room
       setTimeout(() => {
-        if (isInRoom) {
+        if (isInRoom && newEventSource.readyState === EventSource.CLOSED) {
+          console.log('Attempting SSE reconnection...');
           setupSSEConnection();
         }
       }, 5000);
