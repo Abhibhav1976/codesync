@@ -217,6 +217,8 @@ function App() {
       return;
     }
 
+    setStatusMessage('Joining room...');
+
     try {
       const response = await axios.post(`${API}/rooms/join`, {
         room_id: roomIdToJoin,
@@ -226,24 +228,32 @@ function App() {
       const data = response.data;
       
       if (data.error) {
-        setStatusMessage(data.error);
+        setStatusMessage(`Error: ${data.error}`);
         return;
       }
 
+      // Successfully joined room - update all state
       setRoomId(data.room_id);
       setRoomName(data.room_name);
       setCode(data.code);
       setLanguage(data.language);
       setConnectedUsers(data.users);
       setIsInRoom(true);
-      setStatusMessage(`Joined room: ${data.room_name}`);
+      setStatusMessage(`Successfully joined room: ${data.room_name}`);
       setIsCreateRoomOpen(false);
       setIsJoinRoomOpen(false);
       setJoinRoomId('');
       setNewRoomName('');
+
+      // SSE connection will be established by useEffect when isInRoom becomes true
+      console.log('Room joined successfully:', data);
     } catch (error) {
       console.error('Error joining room:', error);
-      setStatusMessage('Failed to join room');
+      if (error.response && error.response.data) {
+        setStatusMessage(`Failed to join room: ${error.response.data.message || 'Unknown error'}`);
+      } else {
+        setStatusMessage('Failed to join room - please check your connection');
+      }
     }
   };
 
