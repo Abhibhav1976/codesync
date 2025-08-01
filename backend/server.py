@@ -21,10 +21,11 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create Socket.IO server
+# Create Socket.IO server with custom path
 sio = socketio.AsyncServer(
     cors_allowed_origins="*",
-    async_mode='asgi'
+    async_mode='asgi',
+    path='/api/socket.io/'  # Custom path under /api prefix
 )
 
 # Create the main app without a prefix
