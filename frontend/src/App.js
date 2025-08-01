@@ -103,10 +103,12 @@ function App() {
 
   const handleSSEMessage = (message) => {
     const { type, data } = message;
+    console.log('Handling SSE message:', type, data);
 
     switch (type) {
       case 'ping':
         // Keep-alive ping, no action needed
+        console.log('Received SSE ping');
         break;
       
       case 'user_joined':
@@ -120,12 +122,15 @@ function App() {
         break;
       
       case 'code_updated':
+        console.log('Code updated by:', data.user_id);
         if (data.user_id !== userId) {
           setCode(data.code);
+          setStatusMessage(`Code updated by ${data.user_id}`);
         }
         break;
       
       case 'cursor_updated':
+        console.log('Cursor updated by:', data.user_id);
         setCursors(prev => ({
           ...prev,
           [data.user_id]: data.position
@@ -133,7 +138,7 @@ function App() {
         break;
       
       default:
-        console.log('Unknown SSE message type:', type);
+        console.log('Unknown SSE message type:', type, data);
     }
   };
 
