@@ -49,6 +49,7 @@ function App() {
   useEffect(() => {
     // Initialize socket connection
     const newSocket = io(BACKEND_URL, {
+      path: '/api/socket.io/',
       transports: ['websocket', 'polling']
     });
 
