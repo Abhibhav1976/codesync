@@ -125,19 +125,19 @@ function App() {
       
       case 'user_joined':
         setConnectedUsers(data.users);
-        setStatusMessage(`${data.user_id} joined the room`);
+        setStatusMessage(`${data.user_name || data.user_id} joined the room`);
         break;
       
       case 'user_left':
         setConnectedUsers(data.users);
-        setStatusMessage(`${data.user_id} left the room`);
+        setStatusMessage(`${data.user_name || data.user_id} left the room`);
         break;
       
       case 'code_updated':
         console.log('Code updated by:', data.user_id);
         if (data.user_id !== userId) {
           setCode(data.code);
-          setStatusMessage(`Code updated by ${data.user_id}`);
+          setStatusMessage(`Code updated by ${data.user_name || data.user_id}`);
         }
         break;
       
