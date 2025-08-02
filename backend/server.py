@@ -298,6 +298,50 @@ async def save_room(room_id: str):
     
     return {"message": "File saved successfully"}
 
+@api_router.post("/send-chat-message")
+async def send_chat_message(request: SendChatMessageRequest):
+    """Send a chat message to a room"""
+    room_id = request.room_id
+    user_id = request.user_id
+    user_name = request.user_name
+    message = request.message.strip()
+    
+    # Validate input
+    if not message:
+        return {"error": "Message cannot be empty"}
+    
+    if len(message) > 200:
+        return {"error": "Message too long (max 200 characters)"}
+    
+    if room_id not in active_rooms:
+        return {"error": "Room not found"}
+    
+    # Create chat message
+    chat_message = ChatMessage(
+        room_id=room_id,
+        user_id=user_id,
+        user_name=user_name,
+        message=message
+    )
+    
+    # Store message in room's chat history (in-memory)
+    active_rooms[room_id]["chat_messages"].append(chat_message.dict())
+    
+    # Keep only last 100 messages to prevent memory bloat
+    if len(active_rooms[room_id]["chat_messages"]) > 100:
+        active_rooms[room_id]["chat_messages"] = active_rooms[room_id]["chat_messages"][-100:]
+    
+    # Broadcast message to all users in the room
+    await send_to_room(room_id, "chat_message", {
+        "id": chat_message.id,
+        "user_id": user_id,
+        "user_name": user_name,
+        "message": message,
+        "timestamp": chat_message.timestamp.isoformat()
+    })
+    
+    return {"success": True, "message_id": chat_message.id}
+
 @api_router.post("/run-code", response_model=RunCodeResponse)
 async def run_code(request: RunCodeRequest):
     """Execute code using Piston API"""
