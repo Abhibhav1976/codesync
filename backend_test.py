@@ -353,6 +353,10 @@ def main():
         tester.test_update_cursor,
         tester.test_save_room,
         tester.test_sse_endpoint,
+        tester.test_run_code_javascript,
+        tester.test_run_code_python,
+        tester.test_run_code_invalid_language,
+        tester.test_run_code_syntax_error,
         tester.test_invalid_room_join
     ]
     
