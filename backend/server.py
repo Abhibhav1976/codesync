@@ -71,6 +71,17 @@ class JoinRoomRequest(BaseModel):
     user_id: str
     user_name: str
 
+class RunCodeRequest(BaseModel):
+    language: str
+    code: str
+    stdin: Optional[str] = ""
+
+class RunCodeResponse(BaseModel):
+    stdout: str
+    stderr: str
+    exit_code: int
+    error: Optional[str] = None
+
 # Utility functions for SSE
 async def send_to_room(room_id: str, event_type: str, data: dict, exclude_user: str = None):
     """Send an event to all users in a room via SSE"""
