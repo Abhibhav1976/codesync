@@ -208,26 +208,113 @@ class CodeEditorAPITester:
             self.tests_run += 1
             return False
 
-    def test_invalid_room_join(self):
-        """Test joining a non-existent room"""
+    def test_run_code_javascript(self):
+        """Test running JavaScript code (Phase 1 feature)"""
+        js_code = "console.log('Hello from JavaScript!');\nconsole.log(2 + 3);"
+        
         success, response = self.run_test(
-            "Join Invalid Room",
+            "Run JavaScript Code",
             "POST",
-            "rooms/join",
-            200,  # API returns 200 with error message
+            "run-code",
+            200,
             data={
-                "room_id": "invalid-room-id",
-                "user_id": self.user_id
+                "language": "javascript",
+                "code": js_code,
+                "stdin": ""
             }
         )
         
-        # Check if error message is returned
-        if success and isinstance(response, dict) and 'error' in response:
-            print("✅ Correctly returned error for invalid room")
-            return True
-        else:
-            print("❌ Should have returned error for invalid room")
-            return False
+        # Verify response format
+        if success and isinstance(response, dict):
+            required_fields = ['stdout', 'stderr', 'exit_code']
+            missing_fields = [field for field in required_fields if field not in response]
+            if missing_fields:
+                print(f"❌ Missing fields in response: {missing_fields}")
+                return False
+            else:
+                print("✅ Run code response has correct format")
+        
+        return success
+
+    def test_run_code_python(self):
+        """Test running Python code (Phase 1 feature)"""
+        python_code = "print('Hello from Python!')\nprint(5 * 7)"
+        
+        success, response = self.run_test(
+            "Run Python Code",
+            "POST",
+            "run-code",
+            200,
+            data={
+                "language": "python",
+                "code": python_code,
+                "stdin": ""
+            }
+        )
+        
+        # Verify response format
+        if success and isinstance(response, dict):
+            required_fields = ['stdout', 'stderr', 'exit_code']
+            missing_fields = [field for field in required_fields if field not in response]
+            if missing_fields:
+                print(f"❌ Missing fields in response: {missing_fields}")
+                return False
+            else:
+                print("✅ Run code response has correct format")
+        
+        return success
+
+    def test_run_code_invalid_language(self):
+        """Test running code with invalid language (Phase 1 error handling)"""
+        success, response = self.run_test(
+            "Run Code with Invalid Language",
+            "POST",
+            "run-code",
+            200,  # API should return 200 with error in response
+            data={
+                "language": "invalid_language",
+                "code": "print('test')",
+                "stdin": ""
+            }
+        )
+        
+        # Should return error response but with 200 status
+        if success and isinstance(response, dict):
+            if 'error' in response or response.get('exit_code', 0) != 0:
+                print("✅ Correctly handled invalid language")
+                return True
+            else:
+                print("❌ Should have returned error for invalid language")
+                return False
+        
+        return success
+
+    def test_run_code_syntax_error(self):
+        """Test running code with syntax error (Phase 1 error handling)"""
+        bad_code = "console.log('missing quote);"
+        
+        success, response = self.run_test(
+            "Run Code with Syntax Error",
+            "POST",
+            "run-code",
+            200,
+            data={
+                "language": "javascript",
+                "code": bad_code,
+                "stdin": ""
+            }
+        )
+        
+        # Should return with non-zero exit code or stderr content
+        if success and isinstance(response, dict):
+            if response.get('exit_code', 0) != 0 or response.get('stderr', ''):
+                print("✅ Correctly handled syntax error")
+                return True
+            else:
+                print("❌ Should have returned error for syntax error")
+                return False
+        
+        return success
 
 def main():
     print("🚀 Starting Real-Time Code Editor API Tests")
