@@ -238,7 +238,8 @@ function App() {
       await axios.post(`${API}/rooms/code`, {
         room_id: roomId,
         code: newCode,
-        user_id: userId
+        user_id: userId,
+        user_name: userName
       });
     } catch (error) {
       console.error('Error updating code:', error);
@@ -251,6 +252,7 @@ function App() {
       await axios.post(`${API}/rooms/cursor`, {
         room_id: roomId,
         user_id: userId,
+        user_name: userName,
         position: position
       });
     } catch (error) {
