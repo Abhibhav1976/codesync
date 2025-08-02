@@ -684,88 +684,276 @@ function App() {
           )}
         </div>
 
-        {/* Editor Section */}
-        <Card className="bg-slate-800 border-slate-700">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center gap-4">
-                <Select value={language} onValueChange={handleLanguageChange}>
-                  <SelectTrigger className="w-40 bg-slate-700 border-slate-600 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {languages.map((lang) => (
-                      <SelectItem key={lang.value} value={lang.value}>
-                        {lang.label}
-                      </SelectItem>
+        {/* Main Content - 3 Column Layout when in room */}
+        {isInRoom ? (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            {/* Left Column - User List (Hidden on mobile) */}
+            <div className="hidden lg:block">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-sm flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Online ({connectedUsers.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {connectedUsers.map((user) => (
+                      <div key={user.user_id} className="flex items-center gap-2 p-2 rounded bg-slate-700">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-slate-300 text-sm truncate">
+                          {user.user_name || user.user_id}
+                        </span>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-              <div className="flex gap-2">
-                <Button
-                  onClick={runCode}
-                  disabled={isCodeRunning}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  {isCodeRunning ? 'Running...' : 'Run'}
-                </Button>
-                <Button
-                  onClick={saveFile}
-                  disabled={!isInRoom}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save
-                </Button>
-                <Button
-                  onClick={resetCode}
-                  variant="outline"
-                  className="border-slate-600 text-slate-200 hover:bg-slate-700"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Reset
-                </Button>
-                <Button
-                  onClick={downloadFile}
-                  variant="outline"
-                  className="border-slate-600 text-slate-200 hover:bg-slate-700"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </Button>
+            {/* Center Column - Code Editor */}
+            <div className="lg:col-span-2">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                      <Select value={language} onValueChange={handleLanguageChange}>
+                        <SelectTrigger className="w-40 bg-slate-700 border-slate-600 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {languages.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>
+                              {lang.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={runCode}
+                        disabled={isCodeRunning}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        {isCodeRunning ? 'Running...' : 'Run'}
+                      </Button>
+                      <Button
+                        onClick={saveFile}
+                        disabled={!isInRoom}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </Button>
+                      <Button
+                        onClick={resetCode}
+                        variant="outline"
+                        className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Reset
+                      </Button>
+                      <Button
+                        onClick={downloadFile}
+                        variant="outline"
+                        className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="h-96 lg:h-[600px] border border-slate-600 rounded-lg overflow-hidden">
+                    <MonacoEditor
+                      height="100%"
+                      language={language}
+                      value={code}
+                      onChange={handleCodeChange}
+                      onMount={handleEditorDidMount}
+                      theme="vs-dark"
+                      options={{
+                        fontSize: 14,
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        wordWrap: 'on',
+                        automaticLayout: true,
+                        tabSize: 2,
+                        insertSpaces: true,
+                        renderWhitespace: 'selection',
+                        lineNumbers: 'on',
+                        folding: true,
+                        bracketMatching: 'always',
+                        autoIndent: 'advanced'
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column - Chat Panel */}
+            <div className={`${showChat ? 'block' : 'hidden'} lg:block`}>
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-white text-sm flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      Chat
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowChat(!showChat)}
+                      className="text-slate-400 hover:text-slate-200 p-1 lg:hidden"
+                    >
+                      {showChat ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {/* Chat Messages */}
+                  <div className="h-80 lg:h-[500px] overflow-y-auto p-3 space-y-3 bg-slate-950 mx-3 mb-3 rounded">
+                    {chatMessages.length === 0 ? (
+                      <div className="text-center text-slate-500 text-sm py-8">
+                        No messages yet. Start a conversation!
+                      </div>
+                    ) : (
+                      chatMessages.map((message) => (
+                        <div key={message.id} className={`flex ${message.user_id === userId ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-xs lg:max-w-sm p-3 rounded-lg ${
+                            message.user_id === userId 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-slate-700 text-slate-100'
+                          }`}>
+                            {message.user_id !== userId && (
+                              <div className="text-xs font-medium mb-1 opacity-75">
+                                {message.user_name}
+                              </div>
+                            )}
+                            <div className="text-sm whitespace-pre-wrap">{message.message}</div>
+                            <div className="text-xs opacity-60 mt-1">
+                              {new Date(message.timestamp).toLocaleTimeString([], { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+                  
+                  {/* Chat Input */}
+                  <div className="p-3 border-t border-slate-700">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newChatMessage}
+                        onChange={(e) => setNewChatMessage(e.target.value)}
+                        onKeyPress={handleChatKeyPress}
+                        placeholder="Type a message..."
+                        disabled={isSendingMessage}
+                        className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 flex-1"
+                        maxLength={200}
+                      />
+                      <Button
+                        onClick={sendChatMessage}
+                        disabled={isSendingMessage || !newChatMessage.trim()}
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {newChatMessage.length}/200 characters
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        ) : (
+          /* Single Column Layout when not in room */
+          <Card className="bg-slate-800 border-slate-700">
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-4">
+                  <Select value={language} onValueChange={handleLanguageChange}>
+                    <SelectTrigger className="w-40 bg-slate-700 border-slate-600 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languages.map((lang) => (
+                        <SelectItem key={lang.value} value={lang.value}>
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={runCode}
+                    disabled={isCodeRunning}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    {isCodeRunning ? 'Running...' : 'Run'}
+                  </Button>
+                  <Button
+                    onClick={resetCode}
+                    variant="outline"
+                    className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Reset
+                  </Button>
+                  <Button
+                    onClick={downloadFile}
+                    variant="outline"
+                    className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="h-96 lg:h-[600px] border border-slate-600 rounded-lg overflow-hidden">
-              <MonacoEditor
-                height="100%"
-                language={language}
-                value={code}
-                onChange={handleCodeChange}
-                onMount={handleEditorDidMount}
-                theme="vs-dark"
-                options={{
-                  fontSize: 14,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  wordWrap: 'on',
-                  automaticLayout: true,
-                  tabSize: 2,
-                  insertSpaces: true,
-                  renderWhitespace: 'selection',
-                  lineNumbers: 'on',
-                  folding: true,
-                  bracketMatching: 'always',
-                  autoIndent: 'advanced'
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="h-96 lg:h-[600px] border border-slate-600 rounded-lg overflow-hidden">
+                <MonacoEditor
+                  height="100%"
+                  language={language}
+                  value={code}
+                  onChange={handleCodeChange}
+                  onMount={handleEditorDidMount}
+                  theme="vs-dark"
+                  options={{
+                    fontSize: 14,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on',
+                    automaticLayout: true,
+                    tabSize: 2,
+                    insertSpaces: true,
+                    renderWhitespace: 'selection',
+                    lineNumbers: 'on',
+                    folding: true,
+                    bracketMatching: 'always',
+                    autoIndent: 'advanced'
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Output Console */}
         {showOutput && (
