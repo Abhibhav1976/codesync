@@ -337,6 +337,256 @@ class CodeEditorAPITester:
             print("❌ Should have returned error for invalid room")
             return False
 
+    # ========== PHASE 2A CHAT FUNCTIONALITY TESTS ==========
+    
+    def test_send_chat_message_valid(self):
+        """Test sending a valid chat message (Phase 2A feature)"""
+        if not self.room_id:
+            print("❌ No room ID available for testing")
+            return False
+            
+        success, response = self.run_test(
+            "Send Valid Chat Message",
+            "POST",
+            "send-chat-message",
+            200,
+            data={
+                "room_id": self.room_id,
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer",
+                "message": "Hello everyone! This is a test message."
+            }
+        )
+        
+        # Verify response includes success and message_id
+        if success and isinstance(response, dict):
+            if response.get('success') == True and 'message_id' in response:
+                print("✅ Chat message sent successfully with message_id")
+                return True
+            else:
+                print("❌ Response should include success: true and message_id")
+                return False
+        
+        return success
+
+    def test_send_chat_message_empty(self):
+        """Test sending empty chat message (should return error)"""
+        if not self.room_id:
+            print("❌ No room ID available for testing")
+            return False
+            
+        success, response = self.run_test(
+            "Send Empty Chat Message",
+            "POST",
+            "send-chat-message",
+            200,  # API returns 200 with error message
+            data={
+                "room_id": self.room_id,
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer",
+                "message": ""
+            }
+        )
+        
+        # Should return error for empty message
+        if success and isinstance(response, dict) and 'error' in response:
+            if "empty" in response['error'].lower():
+                print("✅ Correctly rejected empty message")
+                return True
+            else:
+                print("❌ Error message should mention empty message")
+                return False
+        else:
+            print("❌ Should have returned error for empty message")
+            return False
+
+    def test_send_chat_message_too_long(self):
+        """Test sending message over 200 characters (should return error)"""
+        if not self.room_id:
+            print("❌ No room ID available for testing")
+            return False
+            
+        long_message = "A" * 201  # 201 characters
+        success, response = self.run_test(
+            "Send Long Chat Message (>200 chars)",
+            "POST",
+            "send-chat-message",
+            200,  # API returns 200 with error message
+            data={
+                "room_id": self.room_id,
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer",
+                "message": long_message
+            }
+        )
+        
+        # Should return error for message too long
+        if success and isinstance(response, dict) and 'error' in response:
+            if "long" in response['error'].lower() or "200" in response['error']:
+                print("✅ Correctly rejected message over 200 characters")
+                return True
+            else:
+                print("❌ Error message should mention message length limit")
+                return False
+        else:
+            print("❌ Should have returned error for message too long")
+            return False
+
+    def test_send_chat_message_invalid_room(self):
+        """Test sending chat message to non-existent room"""
+        success, response = self.run_test(
+            "Send Chat Message to Invalid Room",
+            "POST",
+            "send-chat-message",
+            200,  # API returns 200 with error message
+            data={
+                "room_id": "invalid-room-id",
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer",
+                "message": "This should fail"
+            }
+        )
+        
+        # Should return "Room not found" error
+        if success and isinstance(response, dict) and 'error' in response:
+            if "room not found" in response['error'].lower():
+                print("✅ Correctly returned 'Room not found' error")
+                return True
+            else:
+                print("❌ Error message should be 'Room not found'")
+                return False
+        else:
+            print("❌ Should have returned 'Room not found' error")
+            return False
+
+    def test_chat_messages_in_join_response(self):
+        """Test that joining a room returns existing chat messages"""
+        if not self.room_id:
+            print("❌ No room ID available for testing")
+            return False
+        
+        # First, send a few chat messages
+        messages_sent = []
+        for i in range(3):
+            message_text = f"Test message {i+1} from Alice"
+            success, response = self.run_test(
+                f"Send Chat Message {i+1} for Join Test",
+                "POST",
+                "send-chat-message",
+                200,
+                data={
+                    "room_id": self.room_id,
+                    "user_id": self.user_id,
+                    "user_name": "Alice_Developer",
+                    "message": message_text
+                }
+            )
+            if success:
+                messages_sent.append(message_text)
+            time.sleep(0.1)  # Small delay between messages
+        
+        # Now join the room with a different user and check if messages are returned
+        new_user_id = f"test_user_2_{int(time.time())}"
+        success, response = self.run_test(
+            "Join Room and Check Chat History",
+            "POST",
+            "rooms/join",
+            200,
+            data={
+                "room_id": self.room_id,
+                "user_id": new_user_id,
+                "user_name": "Bob_Developer"
+            }
+        )
+        
+        # Verify chat_messages are included in response
+        if success and isinstance(response, dict):
+            if 'chat_messages' in response:
+                chat_messages = response['chat_messages']
+                if isinstance(chat_messages, list) and len(chat_messages) >= len(messages_sent):
+                    print(f"✅ Join response includes {len(chat_messages)} chat messages")
+                    
+                    # Verify message structure
+                    if chat_messages:
+                        last_message = chat_messages[-1]
+                        required_fields = ['id', 'user_id', 'user_name', 'message', 'timestamp']
+                        missing_fields = [field for field in required_fields if field not in last_message]
+                        if not missing_fields:
+                            print("✅ Chat message structure is correct")
+                            return True
+                        else:
+                            print(f"❌ Chat message missing fields: {missing_fields}")
+                            return False
+                    else:
+                        print("✅ Chat messages array is present (empty)")
+                        return True
+                else:
+                    print(f"❌ Expected at least {len(messages_sent)} messages, got {len(chat_messages)}")
+                    return False
+            else:
+                print("❌ Join response should include chat_messages field")
+                return False
+        
+        return success
+
+    def test_chat_message_limit(self):
+        """Test that chat messages are limited to last 100 messages"""
+        if not self.room_id:
+            print("❌ No room ID available for testing")
+            return False
+        
+        print(f"\n🔍 Testing Chat Message Limit (sending 105 messages)...")
+        
+        # Send 105 messages to test the 100 message limit
+        messages_sent = 0
+        for i in range(105):
+            success, response = self.run_test(
+                f"Send Message {i+1}/105 for Limit Test",
+                "POST",
+                "send-chat-message",
+                200,
+                data={
+                    "room_id": self.room_id,
+                    "user_id": self.user_id,
+                    "user_name": "Alice_Developer",
+                    "message": f"Limit test message {i+1}"
+                }
+            )
+            if success:
+                messages_sent += 1
+            
+            # Don't print individual test results for this bulk operation
+            if i % 20 == 0:
+                print(f"   Sent {i+1}/105 messages...")
+        
+        print(f"   Successfully sent {messages_sent}/105 messages")
+        
+        # Now join room and check message count
+        new_user_id = f"test_user_limit_{int(time.time())}"
+        success, response = self.run_test(
+            "Join Room and Check Message Limit",
+            "POST",
+            "rooms/join",
+            200,
+            data={
+                "room_id": self.room_id,
+                "user_id": new_user_id,
+                "user_name": "Charlie_Developer"
+            }
+        )
+        
+        if success and isinstance(response, dict) and 'chat_messages' in response:
+            message_count = len(response['chat_messages'])
+            if message_count <= 100:
+                print(f"✅ Message limit enforced - {message_count} messages returned (≤100)")
+                return True
+            else:
+                print(f"❌ Too many messages returned - {message_count} (should be ≤100)")
+                return False
+        else:
+            print("❌ Could not verify message limit")
+            return False
+
 def main():
     print("🚀 Starting Real-Time Code Editor API Tests")
     print("=" * 60)
