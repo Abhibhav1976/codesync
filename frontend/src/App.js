@@ -649,6 +649,14 @@ function App() {
 
               <div className="flex gap-2">
                 <Button
+                  onClick={runCode}
+                  disabled={isCodeRunning}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  {isCodeRunning ? 'Running...' : 'Run'}
+                </Button>
+                <Button
                   onClick={saveFile}
                   disabled={!isInRoom}
                   className="bg-green-600 hover:bg-green-700 text-white"
