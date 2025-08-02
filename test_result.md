@@ -218,6 +218,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Real-time chat - Frontend UI implementation"
     - "User naming - Name prompt dialog"
     - "Run code UI - Button and output console"
   stuck_tasks: []
