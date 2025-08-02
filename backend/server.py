@@ -198,10 +198,15 @@ async def join_room(request: JoinRoomRequest):
 async def update_code(update: CodeUpdate):
     room_id = update.room_id
     user_id = update.user_id
+    user_name = update.user_name
     new_code = update.code
     
     if room_id not in active_rooms:
         return {"error": "Room not found"}
+    
+    # Get user name from session if not provided
+    if not user_name and user_id in user_sessions:
+        user_name = user_sessions[user_id].get("user_name", user_id)
     
     # Update code in room
     active_rooms[room_id]["code"] = new_code
@@ -212,10 +217,11 @@ async def update_code(update: CodeUpdate):
         {"$set": {"code": new_code}}
     )
     
-    # Broadcast to other users
+    # Broadcast to other users with user name
     await send_to_room(room_id, "code_updated", {
         "code": new_code,
-        "user_id": user_id
+        "user_id": user_id,
+        "user_name": user_name or user_id
     }, exclude_user=user_id)
     
     return {"success": True}
