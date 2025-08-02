@@ -315,6 +315,27 @@ class CodeEditorAPITester:
                 return False
         
         return success
+    def test_invalid_room_join(self):
+        """Test joining a non-existent room with user_name"""
+        success, response = self.run_test(
+            "Join Invalid Room",
+            "POST",
+            "rooms/join",
+            200,  # API returns 200 with error message
+            data={
+                "room_id": "invalid-room-id",
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer"
+            }
+        )
+        
+        # Check if error message is returned
+        if success and isinstance(response, dict) and 'error' in response:
+            print("✅ Correctly returned error for invalid room")
+            return True
+        else:
+            print("❌ Should have returned error for invalid room")
+            return False
 
 def main():
     print("🚀 Starting Real-Time Code Editor API Tests")
