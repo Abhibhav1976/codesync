@@ -125,21 +125,22 @@ class CodeEditorAPITester:
         return success
 
     def test_update_code(self):
-        """Test updating code in a room"""
+        """Test updating code in a room with user_name (Phase 1 feature)"""
         if not self.room_id:
             print("❌ No room ID available for testing")
             return False
             
-        test_code = "console.log('Hello from backend test!');"
+        test_code = "console.log('Hello from Alice!');"
         success, response = self.run_test(
-            "Update Code",
+            "Update Code with User Name",
             "POST",
             "rooms/code",
             200,
             data={
                 "room_id": self.room_id,
                 "code": test_code,
-                "user_id": self.user_id
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer"
             }
         )
         return success
