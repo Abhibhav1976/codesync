@@ -158,7 +158,7 @@ backend:
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -166,6 +166,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "TESTED: Phase 2A chat backend functionality working perfectly! All tests passed: ✅ POST /api/send-chat-message endpoint with proper validation (empty message, 200-char limit, invalid room checks) ✅ Chat message storage and retrieval working ✅ Join room returns existing chat_messages with correct structure (id, user_id, user_name, message, timestamp) ✅ Message limit enforced (keeps only last 100 messages) ✅ SSE endpoint /api/sse/{user_id} accessible ✅ All validation error messages correct. Success rate: 99.2% (126/127 tests passed). Minor: get_room endpoint has 500 error (ObjectId serialization) but doesn't affect chat functionality."
+      - working: "NA"
+        agent: "main"
+        comment: "PHASE 2C BACKEND ENHANCEMENTS: Added TypingStatusRequest and LeaveRoomRequest models. Created POST /api/typing-status endpoint to handle typing indicators with SSE broadcasting. Added POST /api/leave-room endpoint for graceful room leaving with proper cleanup. Extended active_rooms to include typing_users. Enhanced cleanup function to remove stale typing indicators (10s timeout) and clean up typing users on disconnect."
 
 frontend:
   - task: "User naming - Name prompt dialog"
