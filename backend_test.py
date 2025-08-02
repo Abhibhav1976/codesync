@@ -97,21 +97,31 @@ class CodeEditorAPITester:
         return success
 
     def test_join_room(self):
-        """Test joining a room"""
+        """Test joining a room with user_name (Phase 1 feature)"""
         if not self.room_id:
             print("❌ No room ID available for testing")
             return False
             
         success, response = self.run_test(
-            "Join Room",
+            "Join Room with User Name",
             "POST",
             "rooms/join",
             200,
             data={
                 "room_id": self.room_id,
-                "user_id": self.user_id
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer"
             }
         )
+        
+        # Verify user_name is returned in response
+        if success and isinstance(response, dict):
+            if 'user_name' in response and response['user_name'] == "Alice_Developer":
+                print("✅ User name correctly returned in join response")
+            else:
+                print("❌ User name not found in join response")
+                return False
+        
         return success
 
     def test_update_code(self):
