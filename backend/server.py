@@ -532,14 +532,32 @@ async def shutdown_db_client():
 
 # Cleanup function to remove disconnected users
 async def cleanup_disconnected_users():
-    """Background task to clean up disconnected users"""
+    """Background task to clean up disconnected users and stale typing indicators"""
     while True:
         try:
+            current_time = datetime.utcnow()
             for room_id, room_data in list(active_rooms.items()):
                 users_to_remove = []
                 for user_id in list(room_data["users"].keys()):
                     if user_id not in sse_connections:
                         users_to_remove.append(user_id)
+                
+                # Clean up stale typing indicators (older than 10 seconds)
+                typing_users_to_remove = []
+                for user_id, typing_data in list(room_data.get("typing_users", {}).items()):
+                    typing_timestamp = typing_data.get("timestamp")
+                    if typing_timestamp and (current_time - typing_timestamp).total_seconds() > 10:
+                        typing_users_to_remove.append(user_id)
+                
+                for user_id in typing_users_to_remove:
+                    if user_id in room_data["typing_users"]:
+                        del room_data["typing_users"][user_id]
+                    
+                    # Broadcast updated typing status
+                    typing_users = list(room_data["typing_users"].values())
+                    await send_to_room(room_id, "typing_status", {
+                        "typing_users": typing_users
+                    })
                 
                 for user_id in users_to_remove:
                     user_name = None
@@ -551,6 +569,8 @@ async def cleanup_disconnected_users():
                         del room_data["users"][user_id]
                     if user_id in room_data["cursors"]:
                         del room_data["cursors"][user_id]
+                    if user_id in room_data.get("typing_users", {}):
+                        del room_data["typing_users"][user_id]
                     
                     # Notify remaining users with user name
                     await send_to_room(room_id, "user_left", {
