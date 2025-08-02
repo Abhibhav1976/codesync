@@ -155,6 +155,7 @@ async def get_room(room_id: str):
 async def join_room(request: JoinRoomRequest):
     room_id = request.room_id
     user_id = request.user_id
+    user_name = request.user_name
     
     # Check if room exists in database
     room = await db.rooms.find_one({"id": room_id})
@@ -171,14 +172,15 @@ async def join_room(request: JoinRoomRequest):
             "cursors": {}
         }
     
-    # Add user to room
-    user_data = {"user_id": user_id}
+    # Add user to room with name
+    user_data = {"user_id": user_id, "user_name": user_name}
     active_rooms[room_id]["users"][user_id] = user_data
-    user_sessions[user_id] = {"room_id": room_id}
+    user_sessions[user_id] = {"room_id": room_id, "user_name": user_name}
     
     # Notify other users
     await send_to_room(room_id, "user_joined", {
         "user_id": user_id,
+        "user_name": user_name,
         "users": list(active_rooms[room_id]["users"].values())
     }, exclude_user=user_id)
     
@@ -188,6 +190,7 @@ async def join_room(request: JoinRoomRequest):
         "code": active_rooms[room_id]["code"],
         "language": active_rooms[room_id]["language"],
         "user_id": user_id,
+        "user_name": user_name,
         "users": list(active_rooms[room_id]["users"].values())
     }
 
