@@ -185,8 +185,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "User naming - Update models and SSE events"
     - "User naming - Name prompt dialog"
+    - "Run code UI - Button and output console"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
