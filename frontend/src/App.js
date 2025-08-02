@@ -782,14 +782,24 @@ function AppContent() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className={`${theme.colors.text.secondary} text-sm`}>{roomName}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={copyRoomId}
-                      className={`${theme.colors.text.accent} hover:${theme.colors.text.primary} p-1 hover:scale-110 transform transition-all duration-200`}
-                    >
-                      <Copy className="w-3 h-3" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={copyRoomId}
+                        className={`${theme.colors.text.accent} hover:${theme.colors.text.primary} p-1 hover:scale-110 transform transition-all duration-200`}
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsRoomDeletionOpen(true)}
+                        className={`text-red-400 hover:text-red-300 p-1 hover:scale-110 transform transition-all duration-200`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <UserAvatar userName={userName} userId={userId} size="xs" />
