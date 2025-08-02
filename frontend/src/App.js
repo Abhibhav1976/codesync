@@ -19,6 +19,7 @@ function App() {
   const [eventSource, setEventSource] = useState(null);
   const [roomId, setRoomId] = useState('');
   const [userId, setUserId] = useState(() => `user_${Math.random().toString(36).substr(2, 8)}`);
+  const [userName, setUserName] = useState(() => localStorage.getItem('userName') || '');
   const [roomName, setRoomName] = useState('');
   const [code, setCode] = useState('// Welcome to Real-Time Code Editor!\n// Create a new room or join an existing one to start collaborating.\n\nconsole.log("Hello, World!");');
   const [language, setLanguage] = useState('javascript');
@@ -32,6 +33,17 @@ function App() {
   const [statusMessage, setStatusMessage] = useState('Ready to connect');
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
   const [isJoinRoomOpen, setIsJoinRoomOpen] = useState(false);
+  
+  // User naming states
+  const [isUserNamePromptOpen, setIsUserNamePromptOpen] = useState(false);
+  const [tempUserName, setTempUserName] = useState('');
+  const [userNameError, setUserNameError] = useState('');
+  const [pendingAction, setPendingAction] = useState(null); // 'create' or 'join'
+  
+  // Run code states
+  const [isCodeRunning, setIsCodeRunning] = useState(false);
+  const [codeOutput, setCodeOutput] = useState({ stdout: '', stderr: '', exit_code: 0 });
+  const [showOutput, setShowOutput] = useState(false);
   
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
