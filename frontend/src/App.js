@@ -64,6 +64,9 @@ function AppContent() {
   ]);
   const [activeFileId, setActiveFileId] = useState('main');
   
+  // Room deletion state
+  const [isRoomDeletionOpen, setIsRoomDeletionOpen] = useState(false);
+  
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const codeUpdateTimeoutRef = useRef(null);
