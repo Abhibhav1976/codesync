@@ -379,6 +379,7 @@ function App() {
       setCode(data.code);
       setLanguage(data.language);
       setConnectedUsers(data.users);
+      setChatMessages(data.chat_messages || []); // Load existing chat history
       setIsInRoom(true);
       setStatusMessage(`Successfully joined room: ${data.room_name}`);
       setIsCreateRoomOpen(false);
