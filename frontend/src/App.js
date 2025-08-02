@@ -600,7 +600,7 @@ function App() {
                       </Button>
                     </div>
                     <Badge variant="secondary" className="text-xs">
-                      {userId}
+                      {userName || userId}
                     </Badge>
                   </div>
                 </CardContent>
