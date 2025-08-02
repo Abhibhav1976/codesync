@@ -57,15 +57,18 @@ class CodeUpdate(BaseModel):
     room_id: str
     code: str
     user_id: str
+    user_name: Optional[str] = None
 
 class CursorUpdate(BaseModel):
     room_id: str
     user_id: str
+    user_name: Optional[str] = None
     position: Dict[str, int]
 
 class JoinRoomRequest(BaseModel):
     room_id: str
     user_id: str
+    user_name: str
 
 # Utility functions for SSE
 async def send_to_room(room_id: str, event_type: str, data: dict, exclude_user: str = None):
