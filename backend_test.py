@@ -840,7 +840,14 @@ def main():
         tester.test_send_chat_message_too_long,
         tester.test_send_chat_message_invalid_room,
         tester.test_chat_messages_in_join_response,
-        tester.test_chat_message_limit
+        tester.test_chat_message_limit,
+        # Phase 2C Typing Status and Leave Room tests
+        tester.test_typing_status_true,
+        tester.test_typing_status_false,
+        tester.test_typing_status_invalid_room,
+        tester.test_leave_room_valid,
+        tester.test_leave_room_invalid,
+        tester.test_typing_status_multiple_users
     ]
     
     for test in tests:
