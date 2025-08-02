@@ -14,6 +14,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ThemeSelector from './components/ThemeSelector';
 import UserAvatar from './components/UserAvatar';
 import EmojiReaction from './components/EmojiReaction';
+import RoomDeletion from './components/RoomDeletion';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
