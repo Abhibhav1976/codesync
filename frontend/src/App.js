@@ -711,6 +711,81 @@ function App() {
           </CardContent>
         </Card>
 
+        {/* Output Console */}
+        {showOutput && (
+          <div className="mt-4">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-white text-sm">Output Console</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowOutput(false)}
+                    className="text-slate-400 hover:text-slate-200 p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-slate-900 rounded p-4 font-mono text-sm max-h-60 overflow-y-auto">
+                  {codeOutput.stdout && (
+                    <div className="text-green-400 mb-2">
+                      <strong>Output:</strong>
+                      <pre className="whitespace-pre-wrap mt-1">{codeOutput.stdout}</pre>
+                    </div>
+                  )}
+                  {codeOutput.stderr && (
+                    <div className="text-red-400 mb-2">
+                      <strong>Error:</strong>
+                      <pre className="whitespace-pre-wrap mt-1">{codeOutput.stderr}</pre>
+                    </div>
+                  )}
+                  <div className="text-slate-400 text-xs mt-2">
+                    Exit code: {codeOutput.exit_code}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* User Name Prompt Dialog */}
+        <Dialog open={isUserNamePromptOpen} onOpenChange={setIsUserNamePromptOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Enter Your Display Name</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Input
+                  placeholder="Enter your display name (3-15 characters)"
+                  value={tempUserName}
+                  onChange={(e) => {
+                    setTempUserName(e.target.value);
+                    setUserNameError('');
+                  }}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleUserNameSubmit();
+                    }
+                  }}
+                />
+                {userNameError && (
+                  <p className="text-red-400 text-sm mt-1">{userNameError}</p>
+                )}
+                <p className="text-slate-400 text-xs mt-1">
+                  Only letters, numbers, and underscores allowed
+                </p>
+              </div>
+              <Button onClick={handleUserNameSubmit} className="w-full">
+                Continue
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Status Message */}
         {statusMessage && (
           <div className="mt-4">
