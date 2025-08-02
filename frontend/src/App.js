@@ -618,7 +618,7 @@ function App() {
                         variant={user.user_id === userId ? "default" : "secondary"}
                         className="text-xs"
                       >
-                        {user.user_id}
+                        {user.user_name || user.user_id}
                       </Badge>
                     ))}
                   </div>
