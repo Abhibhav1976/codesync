@@ -96,6 +96,17 @@ class SendChatMessageRequest(BaseModel):
     user_name: str
     message: str
 
+class TypingStatusRequest(BaseModel):
+    room_id: str
+    user_id: str
+    user_name: str
+    is_typing: bool
+
+class LeaveRoomRequest(BaseModel):
+    room_id: str
+    user_id: str
+    user_name: str
+
 # Utility functions for SSE
 async def send_to_room(room_id: str, event_type: str, data: dict, exclude_user: str = None):
     """Send an event to all users in a room via SSE"""
