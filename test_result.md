@@ -248,16 +248,12 @@ test_plan:
 
 test_plan:
   current_focus:
-    - "Critical Bug - Python httpcore error"
-    - "Code execution full testing (JS, Python, C++, etc)"
-    - "Real-time collaboration testing"
-    - "Chat functionality full testing"
-    - "Room management and user presence"
-    - "Error handling and edge cases"
-  stuck_tasks:
-    - "Critical Bug - Python httpcore error"
-  test_all: true
-  test_priority: "critical_first"
+    - "Real-time chat - Frontend UI implementation"
+    - "User naming - Name prompt dialog"
+    - "Run code UI - Button and output console"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
