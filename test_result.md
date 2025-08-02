@@ -101,3 +101,84 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Implement Phase 1 foundational features for real-time collaborative code editor:
+  
+  1. User Naming Before Room Join/Create:
+     - Prompt users for display name before creating/joining rooms (3-15 alphanumeric/underscore validation)
+     - Store in localStorage and use in all real-time events
+     - Show user names instead of IDs in UI
+  
+  2. Run Code Online with Piston API:
+     - Add POST /api/run-code endpoint using Piston API (https://emkc.org/api/v2/piston)
+     - Frontend: language dropdown, run button, output console
+     - Handle errors gracefully with loading states
+
+backend:
+  - task: "User naming - Update models and SSE events"
+    implemented: false
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Task identified - need to add user_name field to models and update all SSE events"
+
+  - task: "Run code API - Piston integration"
+    implemented: false
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Task identified - need to create /api/run-code endpoint with Piston API"
+
+frontend:
+  - task: "User naming - Name prompt dialog"
+    implemented: false
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Task identified - need to add name prompt before room join/create with localStorage validation"
+
+  - task: "Run code UI - Button and output console"
+    implemented: false
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Task identified - need to add run button, output console, and error handling"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "User naming - Update models and SSE events"
+    - "User naming - Name prompt dialog"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Starting Phase 1 implementation - user naming and run code features. Plan to implement incrementally with backend first, then frontend for each feature."
