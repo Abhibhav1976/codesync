@@ -177,7 +177,8 @@ async def create_room(room_data: RoomCreate):
         "language": room.language,
         "users": {},
         "cursors": {},
-        "chat_messages": []
+        "chat_messages": [],
+        "typing_users": {}
     }
     
     return room
