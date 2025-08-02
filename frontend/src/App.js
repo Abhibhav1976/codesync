@@ -156,6 +156,12 @@ function App() {
         }));
         break;
       
+      case 'chat_message':
+        console.log('Chat message received:', data);
+        setChatMessages(prev => [...prev, data]);
+        setStatusMessage(`New message from ${data.user_name || data.user_id}`);
+        break;
+      
       default:
         console.log('Unknown SSE message type:', type, data);
     }
