@@ -261,6 +261,13 @@ function App() {
   };
 
   const createRoom = async () => {
+    if (!promptForUserName('create')) {
+      return;
+    }
+    executeCreateRoom();
+  };
+
+  const executeCreateRoom = async () => {
     if (!newRoomName.trim()) {
       setStatusMessage('Please enter a room name');
       return;
@@ -273,7 +280,7 @@ function App() {
       });
 
       const roomData = response.data;
-      await joinRoom(roomData.id);
+      await executeJoinRoom(roomData.id);
     } catch (error) {
       console.error('Error creating room:', error);
       setStatusMessage('Failed to create room');
@@ -281,6 +288,13 @@ function App() {
   };
 
   const joinRoom = async (targetRoomId = null) => {
+    if (!promptForUserName('join')) {
+      return;
+    }
+    executeJoinRoom(targetRoomId);
+  };
+
+  const executeJoinRoom = async (targetRoomId = null) => {
     const roomIdToJoin = targetRoomId || joinRoomId;
     
     if (!roomIdToJoin.trim()) {
