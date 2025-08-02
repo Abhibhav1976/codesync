@@ -118,11 +118,11 @@ user_problem_statement: |
 backend:
   - task: "User naming - Update models and SSE events"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -130,14 +130,17 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "IMPLEMENTED: Added user_name to JoinRoomRequest, CodeUpdate, CursorUpdate models. Updated join_room, update_code, update_cursor endpoints to handle user names. Updated cleanup function to broadcast user names in user_left events."
+      - working: true
+        agent: "testing"
+        comment: "TESTED: All user naming features working correctly. Join room returns user_name in response, code/cursor updates accept user_name field, SSE endpoint accessible. User names properly stored in sessions and broadcasted in events."
 
   - task: "Run code API - Piston integration"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -145,6 +148,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "IMPLEMENTED: Added RunCodeRequest/Response models. Created POST /api/run-code endpoint with Piston API integration at https://emkc.org/api/v2/piston/execute. Includes language mapping, error handling, timeout protection (30s), and proper response formatting."
+      - working: true
+        agent: "testing"
+        comment: "TESTED: Run code functionality working perfectly. JavaScript and Python execution successful with correct output. Error handling works for invalid languages (returns 400 error) and syntax errors (returns stderr with details). Response format matches RunCodeResponse model with stdout/stderr/exit_code fields."
 
 frontend:
   - task: "User naming - Name prompt dialog"
