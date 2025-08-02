@@ -8,7 +8,7 @@ import { Badge } from './components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './components/ui/dialog';
 import { Separator } from './components/ui/separator';
-import { Save, Download, RotateCcw, Users, Copy, PlusCircle, Play, X, Send, MessageCircle, ChevronRight, ChevronLeft, Code, FileText, Plus } from 'lucide-react';
+import { Save, Download, RotateCcw, Users, Copy, PlusCircle, Play, X, Send, MessageCircle, ChevronRight, ChevronLeft, Code, FileText, Plus, Settings, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ThemeSelector from './components/ThemeSelector';
