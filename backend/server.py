@@ -219,7 +219,8 @@ async def join_room(request: JoinRoomRequest):
         "language": active_rooms[room_id]["language"],
         "user_id": user_id,
         "user_name": user_name,
-        "users": list(active_rooms[room_id]["users"].values())
+        "users": list(active_rooms[room_id]["users"].values()),
+        "chat_messages": active_rooms[room_id]["chat_messages"]
     }
 
 @api_router.post("/rooms/code")
