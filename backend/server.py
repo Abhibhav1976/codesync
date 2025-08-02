@@ -282,6 +282,78 @@ async def save_room(room_id: str):
     
     return {"message": "File saved successfully"}
 
+@api_router.post("/run-code", response_model=RunCodeResponse)
+async def run_code(request: RunCodeRequest):
+    """Execute code using Piston API"""
+    try:
+        # Map frontend language names to Piston API language names
+        language_mapping = {
+            "javascript": "javascript",
+            "python": "python",
+            "cpp": "cpp",
+            "typescript": "typescript",
+            "html": "html",
+            "css": "css"
+        }
+        
+        piston_language = language_mapping.get(request.language, request.language)
+        
+        # Prepare the request payload for Piston API
+        piston_payload = {
+            "language": piston_language,
+            "version": "*",  # Use latest version
+            "files": [{
+                "content": request.code
+            }],
+            "stdin": request.stdin or ""
+        }
+        
+        # Make request to Piston API
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "https://emkc.org/api/v2/piston/execute",
+                json=piston_payload,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code != 200:
+                return RunCodeResponse(
+                    stdout="",
+                    stderr=f"Piston API error: {response.status_code}",
+                    exit_code=1,
+                    error=f"API request failed with status {response.status_code}"
+                )
+            
+            result = response.json()
+            
+            # Extract results from Piston API response
+            run_result = result.get("run", {})
+            stdout = run_result.get("stdout", "")
+            stderr = run_result.get("stderr", "")
+            exit_code = run_result.get("code", 0)
+            
+            return RunCodeResponse(
+                stdout=stdout,
+                stderr=stderr,
+                exit_code=exit_code
+            )
+            
+    except httpx.TimeoutException:
+        return RunCodeResponse(
+            stdout="",
+            stderr="Code execution timed out",
+            exit_code=1,
+            error="Request timed out after 30 seconds"
+        )
+    except Exception as e:
+        logger.error(f"Error executing code: {str(e)}")
+        return RunCodeResponse(
+            stdout="",
+            stderr=f"Execution error: {str(e)}",
+            exit_code=1,
+            error=str(e)
+        )
+
 @api_router.get("/sse/{user_id}")
 async def sse_endpoint(user_id: str):
     """Server-Sent Events endpoint for real-time updates"""
