@@ -587,6 +587,232 @@ class CodeEditorAPITester:
             print("❌ Could not verify message limit")
             return False
 
+    # ========== PHASE 2C TYPING STATUS AND LEAVE ROOM TESTS ==========
+    
+    def test_typing_status_true(self):
+        """Test setting typing status to true (Phase 2C feature)"""
+        if not self.room_id:
+            print("❌ No room ID available for testing")
+            return False
+            
+        success, response = self.run_test(
+            "Set Typing Status True",
+            "POST",
+            "typing-status",
+            200,
+            data={
+                "room_id": self.room_id,
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer",
+                "is_typing": True
+            }
+        )
+        
+        # Verify response includes success
+        if success and isinstance(response, dict):
+            if response.get('success') == True:
+                print("✅ Typing status set to true successfully")
+                return True
+            else:
+                print("❌ Response should include success: true")
+                return False
+        
+        return success
+
+    def test_typing_status_false(self):
+        """Test setting typing status to false (Phase 2C feature)"""
+        if not self.room_id:
+            print("❌ No room ID available for testing")
+            return False
+            
+        success, response = self.run_test(
+            "Set Typing Status False",
+            "POST",
+            "typing-status",
+            200,
+            data={
+                "room_id": self.room_id,
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer",
+                "is_typing": False
+            }
+        )
+        
+        # Verify response includes success
+        if success and isinstance(response, dict):
+            if response.get('success') == True:
+                print("✅ Typing status set to false successfully")
+                return True
+            else:
+                print("❌ Response should include success: true")
+                return False
+        
+        return success
+
+    def test_typing_status_invalid_room(self):
+        """Test typing status with invalid room_id"""
+        success, response = self.run_test(
+            "Set Typing Status Invalid Room",
+            "POST",
+            "typing-status",
+            200,  # API returns 200 with error message
+            data={
+                "room_id": "invalid-room-id",
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer",
+                "is_typing": True
+            }
+        )
+        
+        # Should return "Room not found" error
+        if success and isinstance(response, dict) and 'error' in response:
+            if "room not found" in response['error'].lower():
+                print("✅ Correctly returned 'Room not found' error for typing status")
+                return True
+            else:
+                print("❌ Error message should be 'Room not found'")
+                return False
+        else:
+            print("❌ Should have returned 'Room not found' error")
+            return False
+
+    def test_leave_room_valid(self):
+        """Test leaving a room gracefully (Phase 2C feature)"""
+        if not self.room_id:
+            print("❌ No room ID available for testing")
+            return False
+        
+        # Create a new user to test leaving
+        leave_user_id = f"test_user_leave_{int(time.time())}"
+        
+        # First join the room
+        success, response = self.run_test(
+            "Join Room Before Leave Test",
+            "POST",
+            "rooms/join",
+            200,
+            data={
+                "room_id": self.room_id,
+                "user_id": leave_user_id,
+                "user_name": "David_Developer"
+            }
+        )
+        
+        if not success:
+            print("❌ Could not join room for leave test")
+            return False
+        
+        # Now test leaving the room
+        success, response = self.run_test(
+            "Leave Room Gracefully",
+            "POST",
+            "leave-room",
+            200,
+            data={
+                "room_id": self.room_id,
+                "user_id": leave_user_id,
+                "user_name": "David_Developer"
+            }
+        )
+        
+        # Verify response includes success and message
+        if success and isinstance(response, dict):
+            if response.get('success') == True and 'message' in response:
+                print("✅ Left room successfully with confirmation message")
+                return True
+            else:
+                print("❌ Response should include success: true and message")
+                return False
+        
+        return success
+
+    def test_leave_room_invalid(self):
+        """Test leaving a non-existent room"""
+        success, response = self.run_test(
+            "Leave Invalid Room",
+            "POST",
+            "leave-room",
+            200,  # API returns 200 with error message
+            data={
+                "room_id": "invalid-room-id",
+                "user_id": self.user_id,
+                "user_name": "Alice_Developer"
+            }
+        )
+        
+        # Should return "Room not found" error
+        if success and isinstance(response, dict) and 'error' in response:
+            if "room not found" in response['error'].lower():
+                print("✅ Correctly returned 'Room not found' error for leave room")
+                return True
+            else:
+                print("❌ Error message should be 'Room not found'")
+                return False
+        else:
+            print("❌ Should have returned 'Room not found' error")
+            return False
+
+    def test_typing_status_multiple_users(self):
+        """Test typing status with multiple users in room"""
+        if not self.room_id:
+            print("❌ No room ID available for testing")
+            return False
+        
+        # Create additional users for testing
+        user2_id = f"test_user_typing2_{int(time.time())}"
+        user3_id = f"test_user_typing3_{int(time.time())}"
+        
+        # Join room with additional users
+        for i, (user_id, user_name) in enumerate([(user2_id, "Bob_Developer"), (user3_id, "Carol_Developer")]):
+            success, response = self.run_test(
+                f"Join Room User {i+2} for Typing Test",
+                "POST",
+                "rooms/join",
+                200,
+                data={
+                    "room_id": self.room_id,
+                    "user_id": user_id,
+                    "user_name": user_name
+                }
+            )
+            if not success:
+                print(f"❌ Could not join room with user {i+2}")
+                return False
+        
+        # Test multiple users setting typing status
+        typing_tests = [
+            (user2_id, "Bob_Developer", True),
+            (user3_id, "Carol_Developer", True),
+            (user2_id, "Bob_Developer", False),
+            (user3_id, "Carol_Developer", False)
+        ]
+        
+        all_passed = True
+        for user_id, user_name, is_typing in typing_tests:
+            success, response = self.run_test(
+                f"Set Typing {is_typing} for {user_name}",
+                "POST",
+                "typing-status",
+                200,
+                data={
+                    "room_id": self.room_id,
+                    "user_id": user_id,
+                    "user_name": user_name,
+                    "is_typing": is_typing
+                }
+            )
+            if not success or not response.get('success'):
+                all_passed = False
+                break
+            time.sleep(0.1)  # Small delay between requests
+        
+        if all_passed:
+            print("✅ Multiple users typing status updates successful")
+            return True
+        else:
+            print("❌ Some typing status updates failed")
+            return False
+
 def main():
     print("🚀 Starting Real-Time Code Editor API Tests")
     print("=" * 60)
