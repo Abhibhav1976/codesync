@@ -117,28 +117,34 @@ user_problem_statement: |
 
 backend:
   - task: "User naming - Update models and SSE events"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Task identified - need to add user_name field to models and update all SSE events"
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Added user_name to JoinRoomRequest, CodeUpdate, CursorUpdate models. Updated join_room, update_code, update_cursor endpoints to handle user names. Updated cleanup function to broadcast user names in user_left events."
 
   - task: "Run code API - Piston integration"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Task identified - need to create /api/run-code endpoint with Piston API"
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Added RunCodeRequest/Response models. Created POST /api/run-code endpoint with Piston API integration at https://emkc.org/api/v2/piston/execute. Includes language mapping, error handling, timeout protection (30s), and proper response formatting."
 
 frontend:
   - task: "User naming - Name prompt dialog"
