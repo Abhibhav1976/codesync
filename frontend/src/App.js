@@ -632,21 +632,31 @@ function AppContent() {
     }
   };
 
-  const handleLanguageChange = async (newLanguage) => {
-    setLanguage(newLanguage);
-    const defaultCode = getDefaultCodeForLanguage(newLanguage);
-    setCode(defaultCode);
+  const handleRoomDeletion = () => {
+    // Clear all room-related state
+    setIsInRoom(false);
+    setRoomId('');
+    setRoomName('');
+    setConnectedUsers([]);
+    setChatMessages([]);
+    setMessageReactions({});
+    setCursors({});
+    setCode('// Welcome to Real-Time Code Editor!\n// Create a new room or join an existing one to start collaborating.\n\nconsole.log("Hello, World!");');
     
-    // Update the active file
-    setOpenFiles(files => files.map(file => 
-      file.id === activeFileId 
-        ? { ...file, language: newLanguage, content: defaultCode, name: `${file.name.split('.')[0]}.${getFileExtension(newLanguage)}` }
-        : file
-    ));
+    // Reset file tabs to default
+    setOpenFiles([
+      { id: 'main', name: 'main.js', language: 'javascript', content: '// Welcome to Real-Time Code Editor!\n// Create a new room or join an existing one to start collaborating.\n\nconsole.log("Hello, World!");', isActive: true }
+    ]);
+    setActiveFileId('main');
     
-    if (isInRoom) {
-      await updateCode(defaultCode);
+    // Close SSE connection
+    if (eventSource) {
+      eventSource.close();
+      setEventSource(null);
     }
+    
+    setIsConnected(false);
+    setStatusMessage('Room deleted successfully. Ready to create or join a new room.');
   };
 
   return (
