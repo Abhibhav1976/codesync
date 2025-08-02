@@ -316,16 +316,20 @@ async def cleanup_disconnected_users():
                         users_to_remove.append(user_id)
                 
                 for user_id in users_to_remove:
+                    user_name = None
+                    if user_id in user_sessions:
+                        user_name = user_sessions[user_id].get("user_name", user_id)
+                        del user_sessions[user_id]
+                    
                     if user_id in room_data["users"]:
                         del room_data["users"][user_id]
                     if user_id in room_data["cursors"]:
                         del room_data["cursors"][user_id]
-                    if user_id in user_sessions:
-                        del user_sessions[user_id]
                     
-                    # Notify remaining users
+                    # Notify remaining users with user name
                     await send_to_room(room_id, "user_left", {
                         "user_id": user_id,
+                        "user_name": user_name or user_id,
                         "users": list(room_data["users"].values())
                     })
             
