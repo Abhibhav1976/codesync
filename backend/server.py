@@ -230,20 +230,27 @@ async def update_code(update: CodeUpdate):
 async def update_cursor(update: CursorUpdate):
     room_id = update.room_id
     user_id = update.user_id
+    user_name = update.user_name
     position = update.position
     
     if room_id not in active_rooms:
         return {"error": "Room not found"}
     
-    # Update cursor position
+    # Get user name from session if not provided
+    if not user_name and user_id in user_sessions:
+        user_name = user_sessions[user_id].get("user_name", user_id)
+    
+    # Update cursor position with user name
     active_rooms[room_id]["cursors"][user_id] = {
         "user_id": user_id,
+        "user_name": user_name or user_id,
         "position": position
     }
     
-    # Broadcast cursor position
+    # Broadcast cursor position with user name
     await send_to_room(room_id, "cursor_updated", {
         "user_id": user_id,
+        "user_name": user_name or user_id,
         "position": position
     }, exclude_user=user_id)
     
