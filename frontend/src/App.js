@@ -307,7 +307,8 @@ function App() {
     try {
       const response = await axios.post(`${API}/rooms/join`, {
         room_id: roomIdToJoin,
-        user_id: userId
+        user_id: userId,
+        user_name: userName
       });
 
       const data = response.data;
