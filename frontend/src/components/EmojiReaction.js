@@ -10,7 +10,7 @@ const EmojiReaction = ({ messageId, reactions = [], onReact, currentUserId }) =>
     { emoji: '👍', icon: ThumbsUp, name: 'thumbsup' },
     { emoji: '❤️', icon: Heart, name: 'heart' },
     { emoji: '😂', icon: Laugh, name: 'laugh' },
-    { emoji: '😮', icon: Surprise, name: 'surprise' },
+    { emoji: '⚡', icon: Zap, name: 'zap' },
     { emoji: '😢', name: 'sad' },
     { emoji: '😡', icon: Angry, name: 'angry' },
   ];
