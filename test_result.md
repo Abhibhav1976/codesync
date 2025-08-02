@@ -154,28 +154,34 @@ backend:
 
 frontend:
   - task: "User naming - Name prompt dialog"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Task identified - need to add name prompt before room join/create with localStorage validation"
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Added user name state management, validation function (3-15 alphanumeric/underscore), localStorage persistence, prompt dialog, and updated all UI components to show user names instead of user IDs."
 
   - task: "Run code UI - Button and output console"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Task identified - need to add run button, output console, and error handling"
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Added Run button with loading state, runCode function with error handling, collapsible output console showing stdout/stderr/exit_code, integrated with backend /api/run-code endpoint."
 
 metadata:
   created_by: "main_agent"
