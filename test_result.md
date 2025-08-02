@@ -219,3 +219,5 @@ agent_communication:
     message: "FRONTEND COMPLETED: Implemented user name prompt dialog with validation and localStorage persistence. Added run code button and output console. All UI components now show user names. Both Phase 1 features implemented and ready for frontend testing."
   - agent: "testing"
     message: "BACKEND TESTING COMPLETED: Phase 1 backend features are working correctly. User naming integration successful - all endpoints accept user_name field and return it in responses/events. Run-code API working perfectly with JavaScript/Python execution and proper error handling. Minor issue: get_room endpoint has ObjectId serialization error (500 status) but doesn't affect core functionality. Backend ready for frontend integration."
+  - agent: "main"
+    message: "PHASE 2A BACKEND CHAT COMPLETED: Implemented real-time chat backend with ChatMessage/SendChatMessageRequest models, POST /api/send-chat-message endpoint with validation, extended SSE broadcasting for chat_message events, updated active_rooms structure with in-memory chat storage (100 msg limit per room), and modified join_room to return existing chat history. Ready for backend testing."
