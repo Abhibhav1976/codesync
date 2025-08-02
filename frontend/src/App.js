@@ -170,6 +170,54 @@ function App() {
     });
   };
 
+  // User name validation and management
+  const validateUserName = (name) => {
+    if (!name || name.trim().length === 0) {
+      return "Please enter a display name";
+    }
+    if (name.length < 3) {
+      return "Name must be at least 3 characters";
+    }
+    if (name.length > 15) {
+      return "Name must be 15 characters or less";
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+      return "Name can only contain letters, numbers, and underscores";
+    }
+    return "";
+  };
+
+  const promptForUserName = (action) => {
+    if (!userName) {
+      setPendingAction(action);
+      setTempUserName('');
+      setUserNameError('');
+      setIsUserNamePromptOpen(true);
+      return false;
+    }
+    return true;
+  };
+
+  const handleUserNameSubmit = () => {
+    const error = validateUserName(tempUserName);
+    if (error) {
+      setUserNameError(error);
+      return;
+    }
+    
+    setUserName(tempUserName);
+    localStorage.setItem('userName', tempUserName);
+    setIsUserNamePromptOpen(false);
+    
+    // Execute the pending action
+    if (pendingAction === 'create') {
+      executeCreateRoom();
+    } else if (pendingAction === 'join') {
+      executeJoinRoom();
+    }
+    setPendingAction(null);
+  };
+
   const handleCodeChange = (value) => {
     setCode(value);
     
