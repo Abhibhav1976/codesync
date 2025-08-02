@@ -607,7 +607,14 @@ def main():
         tester.test_run_code_python,
         tester.test_run_code_invalid_language,
         tester.test_run_code_syntax_error,
-        tester.test_invalid_room_join
+        tester.test_invalid_room_join,
+        # Phase 2A Chat functionality tests
+        tester.test_send_chat_message_valid,
+        tester.test_send_chat_message_empty,
+        tester.test_send_chat_message_too_long,
+        tester.test_send_chat_message_invalid_room,
+        tester.test_chat_messages_in_join_response,
+        tester.test_chat_message_limit
     ]
     
     for test in tests:
