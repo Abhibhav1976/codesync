@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 class Phase2CAPITester:
-    def __init__(self, base_url="https://b9b58c09-4d70-4113-8a29-5235fd23c14c.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://a33c78eb-cd89-47f9-b620-5c307bf744cd.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
