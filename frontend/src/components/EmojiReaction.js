@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Smile, Heart, ThumbsUp, Laugh, Surprise, Angry } from 'lucide-react';
+import { Smile, Heart, ThumbsUp, Laugh, Zap, Angry } from 'lucide-react';
 
 const EmojiReaction = ({ messageId, reactions = [], onReact, currentUserId }) => {
   const { theme } = useTheme();
