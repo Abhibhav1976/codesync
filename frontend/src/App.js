@@ -621,7 +621,7 @@ function App() {
         </div>
 
         {/* Status and Room Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div className={`grid gap-4 mb-6 ${isInRoom ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:grid-cols-3'}`}>
           <Card className="bg-slate-800 border-slate-700">
             <CardHeader className="pb-3">
               <CardTitle className="text-white text-sm">Connection Status</CardTitle>
@@ -637,50 +637,29 @@ function App() {
           </Card>
 
           {isInRoom && (
-            <>
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-white text-sm">Room Info</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-300 text-sm">{roomName}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={copyRoomId}
-                        className="text-blue-400 hover:text-blue-300 p-1"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </Button>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {userName || userId}
-                    </Badge>
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white text-sm">Room Info</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300 text-sm">{roomName}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={copyRoomId}
+                      className="text-blue-400 hover:text-blue-300 p-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-white text-sm">Connected Users ({connectedUsers.length})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-1">
-                    {connectedUsers.map((user, index) => (
-                      <Badge
-                        key={user.user_id}
-                        variant={user.user_id === userId ? "default" : "secondary"}
-                        className="text-xs"
-                      >
-                        {user.user_name || user.user_id}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </>
+                  <Badge variant="secondary" className="text-xs">
+                    {userName || userId}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
 
