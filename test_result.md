@@ -152,6 +152,18 @@ backend:
         agent: "testing"
         comment: "TESTED: Run code functionality working perfectly. JavaScript and Python execution successful with correct output. Error handling works for invalid languages (returns 400 error) and syntax errors (returns stderr with details). Response format matches RunCodeResponse model with stdout/stderr/exit_code fields."
 
+  - task: "Real-time chat - Backend implementation"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "PHASE 2A IMPLEMENTED: Added ChatMessage and SendChatMessageRequest models. Created POST /api/send-chat-message endpoint with message validation (max 200 chars, non-empty). Extended active_rooms structure to include chat_messages array. Updated join_room response to include existing chat messages. Messages stored in-memory with 100 message limit per room. SSE broadcasting extended to handle 'chat_message' events."
+
 frontend:
   - task: "User naming - Name prompt dialog"
     implemented: true
