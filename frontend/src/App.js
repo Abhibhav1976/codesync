@@ -280,6 +280,41 @@ function App() {
     }
   };
 
+  const sendChatMessage = async () => {
+    if (!newChatMessage.trim() || isSendingMessage || !isInRoom) {
+      return;
+    }
+
+    setIsSendingMessage(true);
+    
+    try {
+      const response = await axios.post(`${API}/send-chat-message`, {
+        room_id: roomId,
+        user_id: userId,
+        user_name: userName,
+        message: newChatMessage.trim()
+      });
+
+      if (response.data.success) {
+        setNewChatMessage(''); // Clear input after successful send
+      } else if (response.data.error) {
+        setStatusMessage(`Chat error: ${response.data.error}`);
+      }
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+      setStatusMessage('Failed to send message');
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
+  const handleChatKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendChatMessage();
+    }
+  };
+
   const createRoom = async () => {
     if (!promptForUserName('create')) {
       return;
