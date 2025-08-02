@@ -45,9 +45,16 @@ function App() {
   const [codeOutput, setCodeOutput] = useState({ stdout: '', stderr: '', exit_code: 0 });
   const [showOutput, setShowOutput] = useState(false);
   
+  // Chat states
+  const [chatMessages, setChatMessages] = useState([]);
+  const [newChatMessage, setNewChatMessage] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [showChat, setShowChat] = useState(true);
+  
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const codeUpdateTimeoutRef = useRef(null);
+  const chatEndRef = useRef(null);
 
   const languages = [
     { value: 'javascript', label: 'JavaScript' },
