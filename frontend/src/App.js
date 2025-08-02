@@ -373,6 +373,45 @@ function App() {
     document.body.removeChild(element);
   };
 
+  const runCode = async () => {
+    if (isCodeRunning) return;
+    
+    setIsCodeRunning(true);
+    setStatusMessage('Running code...');
+    setShowOutput(true);
+    
+    try {
+      const response = await axios.post(`${API}/run-code`, {
+        language: language,
+        code: code,
+        stdin: ""
+      });
+      
+      const result = response.data;
+      setCodeOutput({
+        stdout: result.stdout || '',
+        stderr: result.stderr || '',
+        exit_code: result.exit_code || 0
+      });
+      
+      if (result.exit_code === 0) {
+        setStatusMessage('Code executed successfully');
+      } else {
+        setStatusMessage('Code execution completed with errors');
+      }
+    } catch (error) {
+      console.error('Error running code:', error);
+      setCodeOutput({
+        stdout: '',
+        stderr: error.response?.data?.message || 'Failed to execute code. Please try again.',
+        exit_code: 1
+      });
+      setStatusMessage('Failed to run code');
+    } finally {
+      setIsCodeRunning(false);
+    }
+  };
+
   const copyRoomId = async () => {
     try {
       await navigator.clipboard.writeText(roomId);
