@@ -209,7 +209,8 @@ async def join_room(request: JoinRoomRequest):
             "language": room["language"],
             "users": {},
             "cursors": {},
-            "chat_messages": []
+            "chat_messages": [],
+            "typing_users": {}
         }
     
     # Add user to room with name
