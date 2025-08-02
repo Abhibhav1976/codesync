@@ -8,7 +8,7 @@ import { Badge } from './components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './components/ui/dialog';
 import { Separator } from './components/ui/separator';
-import { Save, Download, RotateCcw, Users, Copy, PlusCircle } from 'lucide-react';
+import { Save, Download, RotateCcw, Users, Copy, PlusCircle, Play, X } from 'lucide-react';
 import axios from 'axios';
 import './App.css';
 
