@@ -8,14 +8,19 @@ import { Badge } from './components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './components/ui/dialog';
 import { Separator } from './components/ui/separator';
-import { Save, Download, RotateCcw, Users, Copy, PlusCircle, Play, X, Send, MessageCircle, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Save, Download, RotateCcw, Users, Copy, PlusCircle, Play, X, Send, MessageCircle, ChevronRight, ChevronLeft, Code, FileText, Plus } from 'lucide-react';
 import axios from 'axios';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import ThemeSelector from './components/ThemeSelector';
+import UserAvatar from './components/UserAvatar';
+import EmojiReaction from './components/EmojiReaction';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-function App() {
+function AppContent() {
+  const { theme } = useTheme();
   const [eventSource, setEventSource] = useState(null);
   const [roomId, setRoomId] = useState('');
   const [userId, setUserId] = useState(() => `user_${Math.random().toString(36).substr(2, 8)}`);
@@ -50,6 +55,13 @@ function App() {
   const [newChatMessage, setNewChatMessage] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [showChat, setShowChat] = useState(true);
+  const [messageReactions, setMessageReactions] = useState({}); // messageId -> array of reactions
+  
+  // File tabs state
+  const [openFiles, setOpenFiles] = useState([
+    { id: 'main', name: 'main.js', language: 'javascript', content: code, isActive: true }
+  ]);
+  const [activeFileId, setActiveFileId] = useState('main');
   
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -151,6 +163,10 @@ function App() {
         console.log('Code updated by:', data.user_id);
         if (data.user_id !== userId) {
           setCode(data.code);
+          // Update the active file content
+          setOpenFiles(files => files.map(file => 
+            file.id === activeFileId ? { ...file, content: data.code } : file
+          ));
           setStatusMessage(`Code updated by ${data.user_name || data.user_id}`);
         }
         break;
@@ -241,6 +257,11 @@ function App() {
   const handleCodeChange = (value) => {
     setCode(value);
     
+    // Update the active file content
+    setOpenFiles(files => files.map(file => 
+      file.id === activeFileId ? { ...file, content: value } : file
+    ));
+    
     if (isInRoom) {
       // Debounce code updates to avoid too many requests
       if (codeUpdateTimeoutRef.current) {
@@ -315,6 +336,27 @@ function App() {
     }
   };
 
+  const handleMessageReaction = (messageId, reactionType) => {
+    setMessageReactions(prev => {
+      const messageReacts = prev[messageId] || [];
+      const existingReaction = messageReacts.find(r => r.userId === userId && r.type === reactionType);
+      
+      if (existingReaction) {
+        // Remove reaction
+        return {
+          ...prev,
+          [messageId]: messageReacts.filter(r => !(r.userId === userId && r.type === reactionType))
+        };
+      } else {
+        // Add reaction
+        return {
+          ...prev,
+          [messageId]: [...messageReacts, { userId, type: reactionType, timestamp: Date.now() }]
+        };
+      }
+    });
+  };
+
   const createRoom = async () => {
     if (!promptForUserName('create')) {
       return;
@@ -387,6 +429,15 @@ function App() {
       setJoinRoomId('');
       setNewRoomName('');
 
+      // Update file tabs
+      setOpenFiles([{
+        id: 'main',
+        name: `main.${getFileExtension(data.language)}`,
+        language: data.language,
+        content: data.code,
+        isActive: true
+      }]);
+
       // SSE connection will be established by useEffect when isInRoom becomes true
       console.log('Room joined successfully:', data);
     } catch (error) {
@@ -414,16 +465,23 @@ function App() {
   const resetCode = async () => {
     const defaultCode = getDefaultCodeForLanguage(language);
     setCode(defaultCode);
+    
+    // Update the active file content
+    setOpenFiles(files => files.map(file => 
+      file.id === activeFileId ? { ...file, content: defaultCode } : file
+    ));
+    
     if (isInRoom) {
       await updateCode(defaultCode);
     }
   };
 
   const downloadFile = () => {
+    const activeFile = openFiles.find(f => f.id === activeFileId);
     const element = document.createElement('a');
-    const file = new Blob([code], { type: 'text/plain' });
+    const file = new Blob([activeFile?.content || code], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = `code.${getFileExtension(language)}`;
+    element.download = activeFile?.name || `code.${getFileExtension(language)}`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -489,22 +547,54 @@ function App() {
       } catch (err) {
         console.error('Fallback copy failed:', err);
         setStatusMessage(`Room ID: ${roomId} (click to select)`);
-        // Show the room ID in a selectable format
-        const roomIdDisplay = document.createElement('div');
-        roomIdDisplay.style.position = 'fixed';
-        roomIdDisplay.style.top = '50%';
-        roomIdDisplay.style.left = '50%';
-        roomIdDisplay.style.transform = 'translate(-50%, -50%)';
-        roomIdDisplay.style.background = 'white';
-        roomIdDisplay.style.padding = '20px';
-        roomIdDisplay.style.border = '2px solid #000';
-        roomIdDisplay.style.zIndex = '10000';
-        roomIdDisplay.style.color = 'black';
-        roomIdDisplay.innerHTML = `<p>Copy this Room ID:</p><strong style="user-select: all;">${roomId}</strong><br><button onclick="this.parentElement.remove()">Close</button>`;
-        document.body.appendChild(roomIdDisplay);
       }
       document.body.removeChild(textArea);
     }
+  };
+
+  const addNewFile = () => {
+    const newFileId = `file_${Date.now()}`;
+    const newFile = {
+      id: newFileId,
+      name: `untitled.${getFileExtension(language)}`,
+      language: language,
+      content: getDefaultCodeForLanguage(language),
+      isActive: true
+    };
+    
+    setOpenFiles(files => [
+      ...files.map(f => ({ ...f, isActive: false })),
+      newFile
+    ]);
+    setActiveFileId(newFileId);
+    setCode(newFile.content);
+  };
+
+  const switchToFile = (fileId) => {
+    const file = openFiles.find(f => f.id === fileId);
+    if (file) {
+      setOpenFiles(files => files.map(f => ({ ...f, isActive: f.id === fileId })));
+      setActiveFileId(fileId);
+      setCode(file.content);
+      setLanguage(file.language);
+    }
+  };
+
+  const closeFile = (fileId) => {
+    if (openFiles.length <= 1) return; // Keep at least one file open
+    
+    const remainingFiles = openFiles.filter(f => f.id !== fileId);
+    const wasActive = openFiles.find(f => f.id === fileId)?.isActive;
+    
+    if (wasActive) {
+      const newActiveFile = remainingFiles[0];
+      newActiveFile.isActive = true;
+      setActiveFileId(newActiveFile.id);
+      setCode(newActiveFile.content);
+      setLanguage(newActiveFile.language);
+    }
+    
+    setOpenFiles(remainingFiles);
   };
 
   const getDefaultCodeForLanguage = (lang) => {
@@ -542,52 +632,67 @@ function App() {
     setLanguage(newLanguage);
     const defaultCode = getDefaultCodeForLanguage(newLanguage);
     setCode(defaultCode);
+    
+    // Update the active file
+    setOpenFiles(files => files.map(file => 
+      file.id === activeFileId 
+        ? { ...file, language: newLanguage, content: defaultCode, name: `${file.name.split('.')[0]}.${getFileExtension(newLanguage)}` }
+        : file
+    ));
+    
     if (isInRoom) {
       await updateCode(defaultCode);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className={`min-h-screen bg-gradient-to-br ${theme.colors.background.primary}`}>
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Real-Time Code Editor</h1>
-            <p className="text-slate-300">Collaborate on code in real-time with multiple users</p>
+            <h1 className={`text-4xl font-bold ${theme.colors.text.primary} mb-2`}>
+              Real-Time Code Editor
+            </h1>
+            <p className={theme.colors.text.secondary}>
+              Collaborate on code in real-time with multiple users
+            </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-center">
+            <ThemeSelector />
+            
             <Dialog open={isCreateRoomOpen} onOpenChange={setIsCreateRoomOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button className={`${theme.colors.interactive.button.accent} ${theme.colors.text.primary} hover:scale-105 transform transition-all duration-200`}>
                   <PlusCircle className="w-4 h-4 mr-2" />
                   New Room
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card}`}>
                 <DialogHeader>
-                  <DialogTitle>Create New Room</DialogTitle>
+                  <DialogTitle className={theme.colors.text.primary}>Create New Room</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <Input
                     placeholder="Room name"
                     value={newRoomName}
                     onChange={(e) => setNewRoomName(e.target.value)}
+                    className={theme.colors.interactive.input}
                   />
                   <Select value={newRoomLanguage} onValueChange={setNewRoomLanguage}>
-                    <SelectTrigger>
+                    <SelectTrigger className={theme.colors.interactive.select}>
                       <SelectValue placeholder="Select language" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={`${theme.colors.background.card} ${theme.colors.background.cardBorder}`}>
                       {languages.map((lang) => (
-                        <SelectItem key={lang.value} value={lang.value}>
+                        <SelectItem key={lang.value} value={lang.value} className={`${theme.colors.text.primary} hover:${theme.colors.chat.hover}`}>
                           {lang.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button onClick={createRoom} className="w-full">
+                  <Button onClick={createRoom} className={`w-full ${theme.colors.interactive.button.primary}`}>
                     Create Room
                   </Button>
                 </div>
@@ -596,22 +701,23 @@ function App() {
 
             <Dialog open={isJoinRoomOpen} onOpenChange={setIsJoinRoomOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="border-slate-600 text-slate-200 hover:bg-slate-800">
+                <Button className={`${theme.colors.interactive.button.secondary} ${theme.colors.text.primary} hover:scale-105 transform transition-all duration-200`}>
                   <Users className="w-4 h-4 mr-2" />
                   Join Room
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card}`}>
                 <DialogHeader>
-                  <DialogTitle>Join Room</DialogTitle>
+                  <DialogTitle className={theme.colors.text.primary}>Join Room</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <Input
                     placeholder="Enter room ID"
                     value={joinRoomId}
                     onChange={(e) => setJoinRoomId(e.target.value)}
+                    className={theme.colors.interactive.input}
                   />
-                  <Button onClick={() => joinRoom()} className="w-full">
+                  <Button onClick={() => joinRoom()} className={`w-full ${theme.colors.interactive.button.primary}`}>
                     Join Room
                   </Button>
                 </div>
@@ -622,14 +728,14 @@ function App() {
 
         {/* Status and Room Info */}
         <div className={`grid gap-4 mb-6 ${isInRoom ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:grid-cols-3'}`}>
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card} hover:scale-[1.02] transform transition-all duration-200`}>
             <CardHeader className="pb-3">
-              <CardTitle className="text-white text-sm">Connection Status</CardTitle>
+              <CardTitle className={`${theme.colors.text.primary} text-sm`}>Connection Status</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <span className="text-slate-300 text-sm">
+                <div className={`w-3 h-3 rounded-full ${isConnected ? theme.colors.status.online : theme.colors.status.offline}`}></div>
+                <span className={`${theme.colors.text.secondary} text-sm`}>
                   {isConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
@@ -637,26 +743,29 @@ function App() {
           </Card>
 
           {isInRoom && (
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card} hover:scale-[1.02] transform transition-all duration-200`}>
               <CardHeader className="pb-3">
-                <CardTitle className="text-white text-sm">Room Info</CardTitle>
+                <CardTitle className={`${theme.colors.text.primary} text-sm`}>Room Info</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-300 text-sm">{roomName}</span>
+                    <span className={`${theme.colors.text.secondary} text-sm`}>{roomName}</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={copyRoomId}
-                      className="text-blue-400 hover:text-blue-300 p-1"
+                      className={`${theme.colors.text.accent} hover:${theme.colors.text.primary} p-1 hover:scale-110 transform transition-all duration-200`}
                     >
                       <Copy className="w-3 h-3" />
                     </Button>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {userName || userId}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <UserAvatar userName={userName} userId={userId} size="xs" />
+                    <Badge variant="secondary" className={`text-xs ${theme.colors.background.glass} ${theme.colors.text.secondary}`}>
+                      {userName || userId}
+                    </Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -668,19 +777,24 @@ function App() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Left Column - User List (Hidden on mobile) */}
             <div className="hidden lg:block">
-              <Card className="bg-slate-800 border-slate-700">
+              <Card className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card} hover:scale-[1.02] transform transition-all duration-200`}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-white text-sm flex items-center gap-2">
+                  <CardTitle className={`${theme.colors.text.primary} text-sm flex items-center gap-2`}>
                     <Users className="w-4 h-4" />
                     Online ({connectedUsers.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {connectedUsers.map((user) => (
-                      <div key={user.user_id} className="flex items-center gap-2 p-2 rounded bg-slate-700">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-slate-300 text-sm truncate">
+                      <div key={user.user_id} className={`flex items-center gap-3 p-2 rounded-lg ${theme.colors.background.glass} hover:scale-105 transform transition-all duration-200`}>
+                        <UserAvatar 
+                          userName={user.user_name} 
+                          userId={user.user_id} 
+                          size="sm" 
+                          isOnline={true} 
+                        />
+                        <span className={`${theme.colors.text.secondary} text-sm truncate flex-1`}>
                           {user.user_name || user.user_id}
                         </span>
                       </div>
@@ -692,17 +806,59 @@ function App() {
 
             {/* Center Column - Code Editor */}
             <div className="lg:col-span-2">
-              <Card className="bg-slate-800 border-slate-700">
+              <Card className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card} hover:scale-[1.01] transform transition-all duration-200`}>
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    {/* File Tabs */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {openFiles.map((file) => (
+                        <div key={file.id} className="flex items-center">
+                          <button
+                            onClick={() => switchToFile(file.id)}
+                            className={`
+                              flex items-center gap-2 px-3 py-1.5 rounded-t-lg text-sm transition-all duration-200
+                              ${file.isActive 
+                                ? `${theme.colors.interactive.button.accent} ${theme.colors.text.primary}` 
+                                : `${theme.colors.background.glass} ${theme.colors.text.secondary} hover:${theme.colors.text.primary}`
+                              }
+                            `}
+                          >
+                            <FileText className="w-3 h-3" />
+                            <span>{file.name}</span>
+                            {openFiles.length > 1 && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  closeFile(file.id);
+                                }}
+                                className="ml-1 hover:bg-red-500/20 rounded p-0.5"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={addNewFile}
+                        className={`
+                          flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm transition-all duration-200
+                          ${theme.colors.background.glass} ${theme.colors.text.muted}
+                          hover:${theme.colors.text.secondary} hover:scale-105 transform
+                        `}
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+
                     <div className="flex items-center gap-4">
                       <Select value={language} onValueChange={handleLanguageChange}>
-                        <SelectTrigger className="w-40 bg-slate-700 border-slate-600 text-white">
+                        <SelectTrigger className={`w-40 ${theme.colors.interactive.select}`}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className={`${theme.colors.background.card} ${theme.colors.background.cardBorder}`}>
                           {languages.map((lang) => (
-                            <SelectItem key={lang.value} value={lang.value}>
+                            <SelectItem key={lang.value} value={lang.value} className={`${theme.colors.text.primary} hover:${theme.colors.chat.hover}`}>
                               {lang.label}
                             </SelectItem>
                           ))}
@@ -714,7 +870,7 @@ function App() {
                       <Button
                         onClick={runCode}
                         disabled={isCodeRunning}
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        className={`${theme.colors.interactive.button.primary} hover:scale-105 transform transition-all duration-200`}
                       >
                         <Play className="w-4 h-4 mr-2" />
                         {isCodeRunning ? 'Running...' : 'Run'}
@@ -722,23 +878,21 @@ function App() {
                       <Button
                         onClick={saveFile}
                         disabled={!isInRoom}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className={`${theme.colors.interactive.button.accent} hover:scale-105 transform transition-all duration-200`}
                       >
                         <Save className="w-4 h-4 mr-2" />
                         Save
                       </Button>
                       <Button
                         onClick={resetCode}
-                        variant="outline"
-                        className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                        className={`${theme.colors.interactive.button.secondary} hover:scale-105 transform transition-all duration-200`}
                       >
                         <RotateCcw className="w-4 h-4 mr-2" />
                         Reset
                       </Button>
                       <Button
                         onClick={downloadFile}
-                        variant="outline"
-                        className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                        className={`${theme.colors.interactive.button.secondary} hover:scale-105 transform transition-all duration-200`}
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download
@@ -747,7 +901,7 @@ function App() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="h-96 lg:h-[600px] border border-slate-600 rounded-lg overflow-hidden">
+                  <div className="h-96 lg:h-[600px] border border-slate-600/30 rounded-lg overflow-hidden backdrop-blur-sm">
                     <MonacoEditor
                       height="100%"
                       language={language}
@@ -757,6 +911,7 @@ function App() {
                       theme="vs-dark"
                       options={{
                         fontSize: 14,
+                        fontFamily: 'JetBrains Mono, Fira Code, monospace',
                         minimap: { enabled: false },
                         scrollBeyondLastLine: false,
                         wordWrap: 'on',
@@ -777,10 +932,10 @@ function App() {
 
             {/* Right Column - Chat Panel */}
             <div className={`${showChat ? 'block' : 'hidden'} lg:block`}>
-              <Card className="bg-slate-800 border-slate-700">
+              <Card className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card} hover:scale-[1.02] transform transition-all duration-200`}>
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-white text-sm flex items-center gap-2">
+                    <CardTitle className={`${theme.colors.text.primary} text-sm flex items-center gap-2`}>
                       <MessageCircle className="w-4 h-4" />
                       Chat
                     </CardTitle>
@@ -788,7 +943,7 @@ function App() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowChat(!showChat)}
-                      className="text-slate-400 hover:text-slate-200 p-1 lg:hidden"
+                      className={`${theme.colors.text.muted} hover:${theme.colors.text.secondary} p-1 lg:hidden hover:scale-110 transform transition-all duration-200`}
                     >
                       {showChat ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                     </Button>
@@ -796,31 +951,50 @@ function App() {
                 </CardHeader>
                 <CardContent className="p-0">
                   {/* Chat Messages */}
-                  <div className="h-80 lg:h-[500px] overflow-y-auto p-3 space-y-3 bg-slate-950 mx-3 mb-3 rounded">
+                  <div className={`h-80 lg:h-[500px] overflow-y-auto p-3 space-y-3 ${theme.colors.background.glass} mx-3 mb-3 rounded backdrop-blur-sm`}>
                     {chatMessages.length === 0 ? (
-                      <div className="text-center text-slate-500 text-sm py-8">
+                      <div className={`text-center ${theme.colors.text.muted} text-sm py-8`}>
                         No messages yet. Start a conversation!
                       </div>
                     ) : (
                       chatMessages.map((message) => (
                         <div key={message.id} className={`flex ${message.user_id === userId ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-xs lg:max-w-sm p-3 rounded-lg ${
-                            message.user_id === userId 
-                              ? 'bg-blue-600 text-white' 
-                              : 'bg-slate-700 text-slate-100'
-                          }`}>
-                            {message.user_id !== userId && (
-                              <div className="text-xs font-medium mb-1 opacity-75">
-                                {message.user_name}
+                          <div className="max-w-xs lg:max-w-sm">
+                            <div className={`
+                              p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] transform
+                              ${message.user_id === userId 
+                                ? theme.colors.chat.own
+                                : theme.colors.chat.other
+                              }
+                            `}>
+                              {message.user_id !== userId && (
+                                <div className="flex items-center gap-2 mb-2">
+                                  <UserAvatar 
+                                    userName={message.user_name} 
+                                    userId={message.user_id} 
+                                    size="xs" 
+                                  />
+                                  <div className={`text-xs font-medium ${theme.colors.text.accent}`}>
+                                    {message.user_name}
+                                  </div>
+                                </div>
+                              )}
+                              <div className="text-sm whitespace-pre-wrap">{message.message}</div>
+                              <div className={`text-xs ${theme.colors.text.muted} mt-2 flex justify-between items-center`}>
+                                <span>
+                                  {new Date(message.timestamp).toLocaleTimeString([], { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}
+                                </span>
                               </div>
-                            )}
-                            <div className="text-sm whitespace-pre-wrap">{message.message}</div>
-                            <div className="text-xs opacity-60 mt-1">
-                              {new Date(message.timestamp).toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}
                             </div>
+                            <EmojiReaction
+                              messageId={message.id}
+                              reactions={messageReactions[message.id] || []}
+                              onReact={handleMessageReaction}
+                              currentUserId={userId}
+                            />
                           </div>
                         </div>
                       ))
@@ -829,7 +1003,7 @@ function App() {
                   </div>
                   
                   {/* Chat Input */}
-                  <div className="p-3 border-t border-slate-700">
+                  <div className={`p-3 border-t ${theme.colors.background.cardBorder}`}>
                     <div className="flex gap-2">
                       <Input
                         value={newChatMessage}
@@ -837,19 +1011,19 @@ function App() {
                         onKeyPress={handleChatKeyPress}
                         placeholder="Type a message..."
                         disabled={isSendingMessage}
-                        className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 flex-1"
+                        className={`${theme.colors.interactive.input} flex-1`}
                         maxLength={200}
                       />
                       <Button
                         onClick={sendChatMessage}
                         disabled={isSendingMessage || !newChatMessage.trim()}
                         size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className={`${theme.colors.interactive.button.accent} hover:scale-105 transform transition-all duration-200`}
                       >
                         <Send className="w-4 h-4" />
                       </Button>
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className={`text-xs ${theme.colors.text.muted} mt-1`}>
                       {newChatMessage.length}/200 characters
                     </div>
                   </div>
@@ -859,17 +1033,17 @@ function App() {
           </div>
         ) : (
           /* Single Column Layout when not in room */
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card} hover:scale-[1.01] transform transition-all duration-200`}>
             <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
                   <Select value={language} onValueChange={handleLanguageChange}>
-                    <SelectTrigger className="w-40 bg-slate-700 border-slate-600 text-white">
+                    <SelectTrigger className={`w-40 ${theme.colors.interactive.select}`}>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={`${theme.colors.background.card} ${theme.colors.background.cardBorder}`}>
                       {languages.map((lang) => (
-                        <SelectItem key={lang.value} value={lang.value}>
+                        <SelectItem key={lang.value} value={lang.value} className={`${theme.colors.text.primary} hover:${theme.colors.chat.hover}`}>
                           {lang.label}
                         </SelectItem>
                       ))}
@@ -881,23 +1055,21 @@ function App() {
                   <Button
                     onClick={runCode}
                     disabled={isCodeRunning}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    className={`${theme.colors.interactive.button.primary} hover:scale-105 transform transition-all duration-200`}
                   >
                     <Play className="w-4 h-4 mr-2" />
                     {isCodeRunning ? 'Running...' : 'Run'}
                   </Button>
                   <Button
                     onClick={resetCode}
-                    variant="outline"
-                    className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                    className={`${theme.colors.interactive.button.secondary} hover:scale-105 transform transition-all duration-200`}
                   >
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Reset
                   </Button>
                   <Button
                     onClick={downloadFile}
-                    variant="outline"
-                    className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                    className={`${theme.colors.interactive.button.secondary} hover:scale-105 transform transition-all duration-200`}
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Download
@@ -906,7 +1078,7 @@ function App() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="h-96 lg:h-[600px] border border-slate-600 rounded-lg overflow-hidden">
+              <div className="h-96 lg:h-[600px] border border-slate-600/30 rounded-lg overflow-hidden backdrop-blur-sm">
                 <MonacoEditor
                   height="100%"
                   language={language}
@@ -916,6 +1088,7 @@ function App() {
                   theme="vs-dark"
                   options={{
                     fontSize: 14,
+                    fontFamily: 'JetBrains Mono, Fira Code, monospace',
                     minimap: { enabled: false },
                     scrollBeyondLastLine: false,
                     wordWrap: 'on',
@@ -937,22 +1110,25 @@ function App() {
         {/* Output Console */}
         {showOutput && (
           <div className="mt-4">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card} hover:scale-[1.02] transform transition-all duration-200`}>
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-white text-sm">Output Console</CardTitle>
+                  <CardTitle className={`${theme.colors.text.primary} text-sm flex items-center gap-2`}>
+                    <Code className="w-4 h-4" />
+                    Output Console
+                  </CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowOutput(false)}
-                    className="text-slate-400 hover:text-slate-200 p-1"
+                    className={`${theme.colors.text.muted} hover:${theme.colors.text.secondary} p-1 hover:scale-110 transform transition-all duration-200`}
                   >
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="bg-slate-900 rounded p-4 font-mono text-sm max-h-60 overflow-y-auto">
+                <div className={`${theme.colors.background.glass} rounded p-4 font-mono text-sm max-h-60 overflow-y-auto backdrop-blur-sm`}>
                   {codeOutput.stdout && (
                     <div className="text-green-400 mb-2">
                       <strong>Output:</strong>
@@ -965,7 +1141,7 @@ function App() {
                       <pre className="whitespace-pre-wrap mt-1">{codeOutput.stderr}</pre>
                     </div>
                   )}
-                  <div className="text-slate-400 text-xs mt-2">
+                  <div className={`${theme.colors.text.muted} text-xs mt-2`}>
                     Exit code: {codeOutput.exit_code}
                   </div>
                 </div>
@@ -976,9 +1152,9 @@ function App() {
 
         {/* User Name Prompt Dialog */}
         <Dialog open={isUserNamePromptOpen} onOpenChange={setIsUserNamePromptOpen}>
-          <DialogContent>
+          <DialogContent className={`${theme.colors.background.card} ${theme.colors.background.cardBorder} ${theme.colors.glow.card}`}>
             <DialogHeader>
-              <DialogTitle>Enter Your Display Name</DialogTitle>
+              <DialogTitle className={theme.colors.text.primary}>Enter Your Display Name</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -994,15 +1170,16 @@ function App() {
                       handleUserNameSubmit();
                     }
                   }}
+                  className={theme.colors.interactive.input}
                 />
                 {userNameError && (
                   <p className="text-red-400 text-sm mt-1">{userNameError}</p>
                 )}
-                <p className="text-slate-400 text-xs mt-1">
+                <p className={`${theme.colors.text.muted} text-xs mt-1`}>
                   Only letters, numbers, and underscores allowed
                 </p>
               </div>
-              <Button onClick={handleUserNameSubmit} className="w-full">
+              <Button onClick={handleUserNameSubmit} className={`w-full ${theme.colors.interactive.button.primary}`}>
                 Continue
               </Button>
             </div>
@@ -1012,15 +1189,23 @@ function App() {
         {/* Status Message */}
         {statusMessage && (
           <div className="mt-4">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className={`${theme.colors.background.glass} ${theme.colors.background.cardBorder} hover:scale-[1.02] transform transition-all duration-200`}>
               <CardContent className="py-3">
-                <p className="text-slate-300 text-sm">{statusMessage}</p>
+                <p className={`${theme.colors.text.secondary} text-sm`}>{statusMessage}</p>
               </CardContent>
             </Card>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 
