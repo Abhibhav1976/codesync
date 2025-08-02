@@ -659,6 +659,23 @@ function AppContent() {
     setStatusMessage('Room deleted successfully. Ready to create or join a new room.');
   };
 
+  const handleLanguageChange = async (newLanguage) => {
+    setLanguage(newLanguage);
+    const defaultCode = getDefaultCodeForLanguage(newLanguage);
+    setCode(defaultCode);
+    
+    // Update the active file
+    setOpenFiles(files => files.map(file => 
+      file.id === activeFileId 
+        ? { ...file, language: newLanguage, content: defaultCode, name: `${file.name.split('.')[0]}.${getFileExtension(newLanguage)}` }
+        : file
+    ));
+    
+    if (isInRoom) {
+      await updateCode(defaultCode);
+    }
+  };
+
   return (
     <div className={`min-h-screen bg-gradient-to-br ${theme.colors.background.primary}`}>
       <div className="container mx-auto p-6">
