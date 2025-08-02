@@ -356,6 +356,74 @@ async def send_chat_message(request: SendChatMessageRequest):
     
     return {"success": True, "message_id": chat_message.id}
 
+@api_router.post("/typing-status")
+async def update_typing_status(request: TypingStatusRequest):
+    """Update user typing status in a room"""
+    room_id = request.room_id
+    user_id = request.user_id
+    user_name = request.user_name
+    is_typing = request.is_typing
+    
+    if room_id not in active_rooms:
+        return {"error": "Room not found"}
+    
+    # Update typing status
+    if is_typing:
+        active_rooms[room_id]["typing_users"][user_id] = {
+            "user_id": user_id,
+            "user_name": user_name,
+            "timestamp": datetime.utcnow()
+        }
+    else:
+        # Remove user from typing list
+        if user_id in active_rooms[room_id]["typing_users"]:
+            del active_rooms[room_id]["typing_users"][user_id]
+    
+    # Broadcast typing status to other users
+    typing_users = list(active_rooms[room_id]["typing_users"].values())
+    await send_to_room(room_id, "typing_status", {
+        "typing_users": typing_users
+    }, exclude_user=user_id)
+    
+    return {"success": True}
+
+@api_router.post("/leave-room")
+async def leave_room(request: LeaveRoomRequest):
+    """Allow user to gracefully leave a room"""
+    room_id = request.room_id
+    user_id = request.user_id
+    user_name = request.user_name
+    
+    if room_id not in active_rooms:
+        return {"error": "Room not found"}
+    
+    # Remove user from all room data structures
+    if user_id in active_rooms[room_id]["users"]:
+        del active_rooms[room_id]["users"][user_id]
+    
+    if user_id in active_rooms[room_id]["cursors"]:
+        del active_rooms[room_id]["cursors"][user_id]
+    
+    if user_id in active_rooms[room_id]["typing_users"]:
+        del active_rooms[room_id]["typing_users"][user_id]
+    
+    # Remove from user sessions
+    if user_id in user_sessions:
+        del user_sessions[user_id]
+    
+    # Remove SSE connection
+    if user_id in sse_connections:
+        del sse_connections[user_id]
+    
+    # Notify remaining users
+    await send_to_room(room_id, "user_left", {
+        "user_id": user_id,
+        "user_name": user_name,
+        "users": list(active_rooms[room_id]["users"].values())
+    })
+    
+    return {"success": True, "message": "Left room successfully"}
+
 @api_router.post("/run-code", response_model=RunCodeResponse)
 async def run_code(request: RunCodeRequest):
     """Execute code using Piston API"""
