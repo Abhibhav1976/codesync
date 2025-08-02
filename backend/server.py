@@ -82,6 +82,20 @@ class RunCodeResponse(BaseModel):
     exit_code: int
     error: Optional[str] = None
 
+class ChatMessage(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    room_id: str
+    user_id: str
+    user_name: str
+    message: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class SendChatMessageRequest(BaseModel):
+    room_id: str
+    user_id: str
+    user_name: str
+    message: str
+
 # Utility functions for SSE
 async def send_to_room(room_id: str, event_type: str, data: dict, exclude_user: str = None):
     """Send an event to all users in a room via SSE"""
