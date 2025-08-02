@@ -78,6 +78,13 @@ function App() {
     };
   }, [isInRoom, roomId, userId]);
 
+  // Auto-scroll chat to bottom when new messages arrive
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+
   const setupSSEConnection = () => {
     if (eventSource) {
       eventSource.close();
