@@ -1227,6 +1227,15 @@ function AppContent() {
           </DialogContent>
         </Dialog>
 
+        {/* Room Deletion Dialog */}
+        <RoomDeletion
+          isOpen={isRoomDeletionOpen}
+          onClose={() => setIsRoomDeletionOpen(false)}
+          roomName={roomName}
+          openFiles={openFiles}
+          onDeleteConfirm={handleRoomDeletion}
+        />
+
         {/* Status Message */}
         {statusMessage && (
           <div className="mt-4">
