@@ -146,19 +146,20 @@ class CodeEditorAPITester:
         return success
 
     def test_update_cursor(self):
-        """Test updating cursor position"""
+        """Test updating cursor position with user_name (Phase 1 feature)"""
         if not self.room_id:
             print("❌ No room ID available for testing")
             return False
             
         success, response = self.run_test(
-            "Update Cursor Position",
+            "Update Cursor Position with User Name",
             "POST",
             "rooms/cursor",
             200,
             data={
                 "room_id": self.room_id,
                 "user_id": self.user_id,
+                "user_name": "Alice_Developer",
                 "position": {
                     "line": 1,
                     "column": 10
