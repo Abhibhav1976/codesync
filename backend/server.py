@@ -610,12 +610,15 @@ async def run_code(request: RunCodeRequest):
 @api_router.get("/sse/{user_id}")
 async def sse_endpoint(user_id: str):
     """Server-Sent Events endpoint for real-time updates"""
+    logger.info(f"SSE connection established for user: {user_id}")
     return StreamingResponse(
         generate_sse_stream(user_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
         }
     )
 
