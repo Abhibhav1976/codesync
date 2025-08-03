@@ -51,6 +51,24 @@ else:
     )
 db = client[os.environ['DB_NAME']]
 
+# Test database connection on startup
+async def test_db_connection():
+    """Test the database connection"""
+    try:
+        # Test connection
+        await client.admin.command('ping')
+        logger.info("MongoDB connection successful!")
+        
+        # Test database access
+        await db.command("ping")
+        logger.info(f"Database '{os.environ['DB_NAME']}' accessible!")
+        
+        return True
+    except Exception as e:
+        logger.error(f"MongoDB connection failed: {str(e)}")
+        logger.error(f"Connection URL (masked): {mongo_url[:20]}...{mongo_url[-20:]}")
+        return False
+
 # Store active sessions and SSE connections for real-time updates
 active_rooms: Dict[str, Dict] = {}
 user_sessions: Dict[str, Dict] = {}
