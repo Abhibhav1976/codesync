@@ -22,6 +22,9 @@ import traceback
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Import robust MongoDB configuration
+from mongo_config import mongo_config
+
 # MongoDB Atlas connection with production-ready SSL configuration
 mongo_url = os.environ['MONGO_URL']
 
