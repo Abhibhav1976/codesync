@@ -20,16 +20,18 @@ import traceback
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
+# MongoDB connection with Render-specific SSL fix
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(
     mongo_url,
-    tls=True,
-    tlsAllowInvalidCertificates=False,
-    serverSelectionTimeoutMS=30000,
-    connectTimeoutMS=30000,
-    socketTimeoutMS=30000,
-    retryWrites=True
+    ssl=True,
+    ssl_cert_reqs=False,
+    tlsInsecure=True,
+    serverSelectionTimeoutMS=60000,
+    connectTimeoutMS=60000,
+    socketTimeoutMS=60000,
+    retryWrites=True,
+    w='majority'
 )
 db = client[os.environ['DB_NAME']]
 
