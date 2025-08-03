@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 class CodeEditorAPITester:
-    def __init__(self, base_url="https://000b0bdd-b788-4732-925f-a5806960ca4d.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://a7f2e870-c985-4fde-8c31-0b78dd933703.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0

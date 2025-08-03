@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 class CodeSyncDebugTester:
-    def __init__(self, base_url="https://000b0bdd-b788-4732-925f-a5806960ca4d.preview.emergentagent.com"):
+    def __init__(self, base_url="https://a7f2e870-c985-4fde-8c31-0b78dd933703.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
