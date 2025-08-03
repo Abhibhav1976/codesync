@@ -17,10 +17,12 @@ class CodeSyncDebugTester:
         """Run a single API test with enhanced debugging"""
         if endpoint.startswith('http'):
             url = endpoint
+        elif endpoint == "/health":
+            url = f"{self.base_url}/health"
         elif endpoint.startswith('/api'):
             url = f"{self.base_url}{endpoint}"
         elif endpoint == "" or endpoint == "/":
-            url = self.base_url if endpoint == "/" else f"{self.base_url}/"
+            url = f"{self.base_url}/api/"
         else:
             url = f"{self.api_url}/{endpoint}"
             
