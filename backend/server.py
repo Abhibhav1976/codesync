@@ -153,6 +153,7 @@ async def generate_sse_stream(user_id: str):
     """Generate SSE stream for a user"""
     queue = asyncio.Queue()
     sse_connections[user_id] = queue
+    logger.info(f"SSE stream started for user: {user_id}")
     
     try:
         while True:
@@ -164,8 +165,10 @@ async def generate_sse_stream(user_id: str):
                 # Send keep-alive ping
                 yield f"data: {json.dumps({'type': 'ping'})}\n\n"
             except Exception as e:
+                logger.error(f"SSE stream error for user {user_id}: {e}")
                 break
     finally:
+        logger.info(f"SSE stream ended for user: {user_id}")
         if user_id in sse_connections:
             del sse_connections[user_id]
 
