@@ -527,6 +527,8 @@ async def leave_room(request: LeaveRoomRequest):
 @api_router.post("/run-code", response_model=RunCodeResponse)
 async def run_code(request: RunCodeRequest):
     """Execute code using Piston API"""
+    logger.info(f"Code execution request - Language: {request.language}, Code length: {len(request.code)} chars")
+    
     try:
         # Map frontend language names to Piston API language names
         language_mapping = {
@@ -539,6 +541,7 @@ async def run_code(request: RunCodeRequest):
         }
         
         piston_language = language_mapping.get(request.language, request.language)
+        logger.info(f"Using Piston language: {piston_language}")
         
         # Prepare the request payload for Piston API
         piston_payload = {
@@ -550,6 +553,8 @@ async def run_code(request: RunCodeRequest):
             "stdin": request.stdin or ""
         }
         
+        logger.info("Sending request to Piston API...")
+        
         # Make request to Piston API
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
@@ -559,6 +564,7 @@ async def run_code(request: RunCodeRequest):
             )
             
             if response.status_code != 200:
+                logger.error(f"Piston API error: {response.status_code} - {response.text}")
                 return RunCodeResponse(
                     stdout="",
                     stderr=f"Piston API error: {response.status_code}",
@@ -567,12 +573,15 @@ async def run_code(request: RunCodeRequest):
                 )
             
             result = response.json()
+            logger.info(f"Piston API response received: exit_code={result.get('run', {}).get('code', 'unknown')}")
             
             # Extract results from Piston API response
             run_result = result.get("run", {})
             stdout = run_result.get("stdout", "")
             stderr = run_result.get("stderr", "")
             exit_code = run_result.get("code", 0)
+            
+            logger.info(f"Code execution completed - stdout length: {len(stdout)}, stderr length: {len(stderr)}, exit_code: {exit_code}")
             
             return RunCodeResponse(
                 stdout=stdout,
@@ -581,6 +590,7 @@ async def run_code(request: RunCodeRequest):
             )
             
     except httpx.TimeoutException:
+        logger.error("Code execution timed out after 30 seconds")
         return RunCodeResponse(
             stdout="",
             stderr="Code execution timed out",
@@ -589,6 +599,7 @@ async def run_code(request: RunCodeRequest):
         )
     except Exception as e:
         logger.error(f"Error executing code: {str(e)}")
+        logger.error(traceback.format_exc())
         return RunCodeResponse(
             stdout="",
             stderr=f"Execution error: {str(e)}",
