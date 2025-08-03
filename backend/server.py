@@ -432,14 +432,19 @@ async def send_chat_message(request: SendChatMessageRequest):
     user_name = request.user_name
     message = request.message.strip()
     
+    logger.info(f"Chat message from {user_name} ({user_id}) in room {room_id}: {len(message)} chars")
+    
     # Validate input
     if not message:
+        logger.warning(f"Empty message rejected from user {user_id}")
         return {"error": "Message cannot be empty"}
     
     if len(message) > 200:
+        logger.warning(f"Message too long rejected from user {user_id}: {len(message)} chars")
         return {"error": "Message too long (max 200 characters)"}
     
     if room_id not in active_rooms:
+        logger.warning(f"Chat message to non-existent room: {room_id}")
         return {"error": "Room not found"}
     
     # Create chat message
@@ -456,6 +461,7 @@ async def send_chat_message(request: SendChatMessageRequest):
     # Keep only last 100 messages to prevent memory bloat
     if len(active_rooms[room_id]["chat_messages"]) > 100:
         active_rooms[room_id]["chat_messages"] = active_rooms[room_id]["chat_messages"][-100:]
+        logger.info(f"Chat history trimmed to 100 messages for room {room_id}")
     
     # Broadcast message to all users in the room
     await send_to_room(room_id, "chat_message", {
@@ -466,6 +472,7 @@ async def send_chat_message(request: SendChatMessageRequest):
         "timestamp": chat_message.timestamp.isoformat()
     })
     
+    logger.info(f"Chat message broadcasted successfully: {chat_message.id}")
     return {"success": True, "message_id": chat_message.id}
 
 @api_router.post("/typing-status")
