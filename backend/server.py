@@ -4,6 +4,8 @@ from fastapi.exception_handlers import http_exception_handler
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 import os
 import logging
 from pathlib import Path
