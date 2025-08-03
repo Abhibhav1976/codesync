@@ -123,7 +123,10 @@ class LeaveRoomRequest(BaseModel):
 # Utility functions for SSE
 async def send_to_room(room_id: str, event_type: str, data: dict, exclude_user: str = None):
     """Send an event to all users in a room via SSE"""
+    logger.info(f"Broadcasting {event_type} event to room {room_id} (excluding user: {exclude_user})")
+    
     if room_id in active_rooms:
+        recipients = 0
         for user_id, user_data in active_rooms[room_id]["users"].items():
             if exclude_user and user_id == exclude_user:
                 continue
@@ -135,10 +138,16 @@ async def send_to_room(room_id: str, event_type: str, data: dict, exclude_user: 
                 }
                 try:
                     await sse_connections[user_id].put(json.dumps(event_data))
+                    recipients += 1
                 except:
                     # Remove broken connection
+                    logger.warning(f"Removing broken SSE connection for user: {user_id}")
                     if user_id in sse_connections:
                         del sse_connections[user_id]
+        
+        logger.info(f"Event {event_type} sent to {recipients} users in room {room_id}")
+    else:
+        logger.warning(f"Attempted to send event to non-existent room: {room_id}")
 
 async def generate_sse_stream(user_id: str):
     """Generate SSE stream for a user"""
