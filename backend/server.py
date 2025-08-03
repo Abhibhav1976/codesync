@@ -160,6 +160,79 @@ async def generate_sse_stream(user_id: str):
         if user_id in sse_connections:
             del sse_connections[user_id]
 
+# Root Routes (without /api prefix)
+@app.get("/")
+async def root():
+    """Root endpoint for health checks and basic API information"""
+    logger.info("Root endpoint accessed")
+    return {
+        "message": "CodeSync Real-Time Code Editor Backend",
+        "status": "running",
+        "version": "1.0.0",
+        "api_docs": "/docs"
+    }
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring systems"""
+    logger.info("Health check endpoint accessed")
+    try:
+        # Test database connection
+        await db.command("ping")
+        db_status = "connected"
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        db_status = "disconnected"
+    
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "database": db_status,
+        "active_rooms": len(active_rooms),
+        "active_connections": len(sse_connections)
+    }
+
+# Custom exception handlers
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    logger.warning(f"404 Not Found: {request.method} {request.url}")
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Not Found",
+            "detail": f"The requested endpoint {request.url.path} was not found",
+            "method": request.method,
+            "available_endpoints": ["/", "/health", "/api/", "/docs"]
+        }
+    )
+
+@app.exception_handler(400)
+async def bad_request_handler(request: Request, exc: HTTPException):
+    logger.warning(f"400 Bad Request: {request.method} {request.url} - {exc.detail}")
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "Bad Request",
+            "detail": str(exc.detail),
+            "method": request.method,
+            "url": str(request.url)
+        }
+    )
+
+@app.exception_handler(500)
+async def internal_server_error_handler(request: Request, exc: Exception):
+    logger.error(f"500 Internal Server Error: {request.method} {request.url} - {str(exc)}")
+    logger.error(traceback.format_exc())
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal Server Error",
+            "detail": "An unexpected error occurred",
+            "method": request.method,
+            "url": str(request.url)
+        }
+    )
+
 # API Routes
 @api_router.get("/")
 async def root():
