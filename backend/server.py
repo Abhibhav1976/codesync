@@ -255,6 +255,7 @@ async def get_status_checks():
 
 @api_router.post("/rooms", response_model=Room)
 async def create_room(room_data: RoomCreate):
+    logger.info(f"Creating room: {room_data.name} with language: {room_data.language}")
     room = Room(name=room_data.name, language=room_data.language)
     room_dict = room.dict()
     await db.rooms.insert_one(room_dict)
@@ -270,13 +271,17 @@ async def create_room(room_data: RoomCreate):
         "typing_users": {}
     }
     
+    logger.info(f"Room created successfully with ID: {room.id}")
     return room
 
 @api_router.get("/rooms/{room_id}")
 async def get_room(room_id: str):
+    logger.info(f"Getting room details for room_id: {room_id}")
     room = await db.rooms.find_one({"id": room_id})
     if room:
+        logger.info(f"Room found: {room_id}")
         return room
+    logger.warning(f"Room not found: {room_id}")
     return {"error": "Room not found"}
 
 @api_router.post("/rooms/join")
