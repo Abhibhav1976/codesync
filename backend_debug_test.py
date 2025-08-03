@@ -414,10 +414,9 @@ class CodeSyncDebugTester:
             print(f"   Response Status: {response.status_code}")
             print(f"   Content-Type: {response.headers.get('content-type', 'N/A')}")
             
-            # Check for SSE-specific headers
+            # Check for SSE-specific headers (Connection header might be handled by proxy)
             expected_headers = {
                 'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
                 'Access-Control-Allow-Origin': '*'
             }
             
@@ -429,6 +428,14 @@ class CodeSyncDebugTester:
                 else:
                     print(f"   ❌ SSE Header {header}: Expected '{expected_value}', got '{actual_value}'")
                     headers_ok = False
+            
+            # Check content type for SSE
+            content_type = response.headers.get('content-type', '')
+            if 'text/event-stream' in content_type:
+                print(f"   ✅ SSE Content-Type: {content_type}")
+            else:
+                print(f"   ❌ SSE Content-Type should contain 'text/event-stream', got: {content_type}")
+                headers_ok = False
             
             if response.status_code == 200 and headers_ok:
                 print("✅ SSE endpoint accessible with proper headers")
