@@ -20,19 +20,35 @@ import traceback
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection with Render-specific SSL fix
+# MongoDB Atlas connection with proper SSL configuration
 mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(
-    mongo_url,
-    ssl=True,
-    ssl_cert_reqs=False,
-    tlsInsecure=True,
-    serverSelectionTimeoutMS=60000,
-    connectTimeoutMS=60000,
-    socketTimeoutMS=60000,
-    retryWrites=True,
-    w='majority'
-)
+
+# Determine if we're using Atlas (has mongodb+srv://) or local MongoDB
+is_atlas = mongo_url.startswith('mongodb+srv://')
+
+if is_atlas:
+    # MongoDB Atlas configuration with proper SSL
+    client = AsyncIOMotorClient(
+        mongo_url,
+        tls=True,
+        tlsAllowInvalidCertificates=False,
+        tlsAllowInvalidHostnames=False,
+        serverSelectionTimeoutMS=30000,
+        connectTimeoutMS=30000,
+        socketTimeoutMS=30000,
+        maxPoolSize=50,
+        retryWrites=True,
+        w='majority'
+    )
+else:
+    # Local MongoDB configuration (no SSL)
+    client = AsyncIOMotorClient(
+        mongo_url,
+        serverSelectionTimeoutMS=30000,
+        connectTimeoutMS=30000,
+        socketTimeoutMS=30000,
+        maxPoolSize=50
+    )
 db = client[os.environ['DB_NAME']]
 
 # Store active sessions and SSE connections for real-time updates
