@@ -290,13 +290,17 @@ async def join_room(request: JoinRoomRequest):
     user_id = request.user_id
     user_name = request.user_name
     
+    logger.info(f"User {user_name} ({user_id}) attempting to join room: {room_id}")
+    
     # Check if room exists in database
     room = await db.rooms.find_one({"id": room_id})
     if not room:
+        logger.warning(f"Room not found in database: {room_id}")
         return {"error": "Room not found"}
     
     # Initialize room in memory if not exists
     if room_id not in active_rooms:
+        logger.info(f"Initializing room in memory: {room_id}")
         active_rooms[room_id] = {
             "name": room["name"],
             "code": room.get("code", ""),
@@ -311,6 +315,8 @@ async def join_room(request: JoinRoomRequest):
     user_data = {"user_id": user_id, "user_name": user_name}
     active_rooms[room_id]["users"][user_id] = user_data
     user_sessions[user_id] = {"room_id": room_id, "user_name": user_name}
+    
+    logger.info(f"User {user_name} successfully joined room {room_id}. Total users: {len(active_rooms[room_id]['users'])}")
     
     # Notify other users
     await send_to_room(room_id, "user_joined", {
