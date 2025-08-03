@@ -191,13 +191,11 @@ async def root():
 async def health_check():
     """Health check endpoint for monitoring systems"""
     logger.info("Health check endpoint accessed")
-    try:
-        # Test database connection
-        await db.command("ping")
+    
+    # Check MongoDB health using the new config
+    db_status = "disconnected"
+    if await mongo_config.health_check():
         db_status = "connected"
-    except Exception as e:
-        logger.error(f"Database health check failed: {e}")
-        db_status = "disconnected"
     
     return {
         "status": "healthy",
