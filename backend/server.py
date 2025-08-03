@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, APIRouter, BackgroundTasks, Request, HTTPException
+from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.exception_handlers import http_exception_handler
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -14,6 +15,7 @@ import json
 import asyncio
 from contextlib import asynccontextmanager
 import httpx
+import traceback
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
