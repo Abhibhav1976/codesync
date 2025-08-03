@@ -748,7 +748,8 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    client.close()
+    if mongo_config.client:
+        mongo_config.client.close()
 
 # Cleanup function to remove disconnected users
 async def cleanup_disconnected_users():
