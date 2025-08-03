@@ -786,4 +786,12 @@ async def cleanup_disconnected_users():
 # Start cleanup task
 @app.on_event("startup")
 async def startup_event():
+    """Initialize application on startup"""
+    # Test database connection
+    connection_success = await test_db_connection()
+    if not connection_success:
+        logger.critical("Failed to connect to MongoDB. Application may not function properly.")
+        # Don't exit the application, just log the error
+    
+    # Start the cleanup task
     asyncio.create_task(cleanup_disconnected_users())
