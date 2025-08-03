@@ -638,6 +638,18 @@ async def run_code(request: RunCodeRequest):
             error=str(e)
         )
 
+@api_router.options("/run-code")
+async def run_code_options():
+    logger.info("OPTIONS request received for /api/run-code")
+    return JSONResponse(
+        content={"message": "CORS preflight"},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
 @api_router.get("/sse/{user_id}")
 async def sse_endpoint(user_id: str):
     """Server-Sent Events endpoint for real-time updates"""
