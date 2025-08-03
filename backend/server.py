@@ -30,8 +30,19 @@ active_rooms: Dict[str, Dict] = {}
 user_sessions: Dict[str, Dict] = {}
 sse_connections: Dict[str, asyncio.Queue] = {}
 
+# Configure logging first
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 # Create the main app
-app = FastAPI()
+app = FastAPI(
+    title="CodeSync API",
+    description="Real-time collaborative code editor backend",
+    version="1.0.0"
+)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
