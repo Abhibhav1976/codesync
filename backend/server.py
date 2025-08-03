@@ -808,10 +808,15 @@ async def cleanup_disconnected_users():
 @app.on_event("startup")
 async def startup_event():
     """Initialize application on startup"""
-    # Test database connection
-    connection_success = await test_db_connection()
-    if not connection_success:
-        logger.critical("Failed to connect to MongoDB. Application may not function properly.")
+    global db
+    
+    # Initialize MongoDB connection
+    connection_success = await mongo_config.connect()
+    if connection_success:
+        db = mongo_config.get_database()
+        logger.info("✅ Database initialized successfully")
+    else:
+        logger.critical("❌ Failed to connect to MongoDB. Application may not function properly.")
         # Don't exit the application, just log the error
     
     # Start the cleanup task
