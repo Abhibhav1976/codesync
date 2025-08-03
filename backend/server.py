@@ -25,58 +25,8 @@ load_dotenv(ROOT_DIR / '.env')
 # Import robust MongoDB configuration
 from mongo_config import mongo_config
 
-# MongoDB Atlas connection with production-ready SSL configuration
-mongo_url = os.environ['MONGO_URL']
-
-# Determine if we're using Atlas (has mongodb+srv://) or local MongoDB
-is_atlas = mongo_url.startswith('mongodb+srv://')
-
-if is_atlas:
-    # MongoDB Atlas configuration optimized for production deployment
-    client = AsyncIOMotorClient(
-        mongo_url,
-        tls=True,
-        tlsAllowInvalidCertificates=False,
-        tlsAllowInvalidHostnames=False,
-        serverSelectionTimeoutMS=15000,  # Reduced timeout for faster failure detection
-        connectTimeoutMS=15000,          # Reduced timeout
-        socketTimeoutMS=30000,
-        maxPoolSize=10,                  # Reduced pool size for serverless
-        minPoolSize=1,
-        maxIdleTimeMS=30000,
-        retryWrites=True,
-        w='majority',
-        readPreference='primaryPreferred'  # Allow reads from secondaries if needed
-    )
-else:
-    # Local MongoDB configuration (no SSL)
-    client = AsyncIOMotorClient(
-        mongo_url,
-        serverSelectionTimeoutMS=15000,
-        connectTimeoutMS=15000,
-        socketTimeoutMS=30000,
-        maxPoolSize=10,
-        minPoolSize=1
-    )
-db = client[os.environ['DB_NAME']]
-
-# Test database connection on startup
-async def test_db_connection():
-    """Test the database connection"""
-    try:
-        # Test connection
-        await client.admin.command('ping')
-        logger.info("MongoDB connection successful!")
-        
-        # Test database access
-        await db.command("ping")
-        logger.info(f"Database '{os.environ['DB_NAME']}' accessible!")
-        
-        return True
-    except Exception as e:
-        logger.error(f"MongoDB connection failed: {str(e)}")
-        logger.error(f"Connection URL (masked): {mongo_url[:20]}...{mongo_url[-20:]}")
-        return False
+# MongoDB will be initialized in startup event
+db = None
 
 # Store active sessions and SSE connections for real-time updates
 active_rooms: Dict[str, Dict] = {}
