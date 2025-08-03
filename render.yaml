@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: codesync-backend
+    runtime: python
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGO_URL
+        value: mongodb+srv://abhibhavr:aryanraj@codesync-cluster.n3jdeuf.mongodb.net/?retryWrites=true&w=majority&appName=codesync-cluster
+      - key: DB_NAME
+        value: codesync
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+  - type: static
+    name: codesync-frontend
+    buildCommand: cd frontend && yarn install && yarn build
+    staticPublishPath: frontend/build
+    envVars:
+      - key: REACT_APP_BACKEND_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://codesync-backend.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
