@@ -286,6 +286,18 @@ async def create_room(room_data: RoomCreate):
     logger.info(f"Room created successfully with ID: {room.id}")
     return room
 
+@api_router.options("/rooms")
+async def create_room_options():
+    logger.info("OPTIONS request received for /api/rooms")
+    return JSONResponse(
+        content={"message": "CORS preflight"},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
 @api_router.get("/rooms/{room_id}")
 async def get_room(room_id: str):
     logger.info(f"Getting room details for room_id: {room_id}")
