@@ -625,19 +625,17 @@ async def sse_endpoint(user_id: str):
 # Include the router in the main app
 app.include_router(api_router)
 
+# CORS middleware - configure BEFORE including routes and be specific about allowed methods
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins
     allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
