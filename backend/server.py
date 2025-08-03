@@ -314,23 +314,35 @@ async def get_status_checks():
 @api_router.post("/rooms", response_model=Room)
 async def create_room(room_data: RoomCreate):
     logger.info(f"Creating room: {room_data.name} with language: {room_data.language}")
-    room = Room(name=room_data.name, language=room_data.language)
-    room_dict = room.dict()
-    await db.rooms.insert_one(room_dict)
-    
-    # Initialize room in memory
-    active_rooms[room.id] = {
-        "name": room.name,
-        "code": "",
-        "language": room.language,
-        "users": {},
-        "cursors": {},
-        "chat_messages": [],
-        "typing_users": {}
-    }
-    
-    logger.info(f"Room created successfully with ID: {room.id}")
-    return room
+    try:
+        room = Room(name=room_data.name, language=room_data.language)
+        room_dict = room.dict()
+        
+        # Test database connection before operation
+        await db.command("ping")
+        
+        await db.rooms.insert_one(room_dict)
+        
+        # Initialize room in memory
+        active_rooms[room.id] = {
+            "name": room.name,
+            "code": "",
+            "language": room.language,
+            "users": {},
+            "cursors": {},
+            "chat_messages": [],
+            "typing_users": {}
+        }
+        
+        logger.info(f"Room created successfully with ID: {room.id}")
+        return room
+        
+    except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+        logger.error(f"Database connection error when creating room: {str(e)}")
+        raise HTTPException(status_code=503, detail="Database connection error")
+    except Exception as e:
+        logger.error(f"Error creating room: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @api_router.options("/rooms")
 async def create_room_options():
