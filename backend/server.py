@@ -22,34 +22,38 @@ import traceback
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB Atlas connection with proper SSL configuration
+# MongoDB Atlas connection with production-ready SSL configuration
 mongo_url = os.environ['MONGO_URL']
 
 # Determine if we're using Atlas (has mongodb+srv://) or local MongoDB
 is_atlas = mongo_url.startswith('mongodb+srv://')
 
 if is_atlas:
-    # MongoDB Atlas configuration with proper SSL
+    # MongoDB Atlas configuration optimized for production deployment
     client = AsyncIOMotorClient(
         mongo_url,
         tls=True,
         tlsAllowInvalidCertificates=False,
         tlsAllowInvalidHostnames=False,
-        serverSelectionTimeoutMS=30000,
-        connectTimeoutMS=30000,
+        serverSelectionTimeoutMS=15000,  # Reduced timeout for faster failure detection
+        connectTimeoutMS=15000,          # Reduced timeout
         socketTimeoutMS=30000,
-        maxPoolSize=50,
+        maxPoolSize=10,                  # Reduced pool size for serverless
+        minPoolSize=1,
+        maxIdleTimeMS=30000,
         retryWrites=True,
-        w='majority'
+        w='majority',
+        readPreference='primaryPreferred'  # Allow reads from secondaries if needed
     )
 else:
     # Local MongoDB configuration (no SSL)
     client = AsyncIOMotorClient(
         mongo_url,
-        serverSelectionTimeoutMS=30000,
-        connectTimeoutMS=30000,
+        serverSelectionTimeoutMS=15000,
+        connectTimeoutMS=15000,
         socketTimeoutMS=30000,
-        maxPoolSize=50
+        maxPoolSize=10,
+        minPoolSize=1
     )
 db = client[os.environ['DB_NAME']]
 
