@@ -235,14 +235,17 @@ async def internal_server_error_handler(request: Request, exc: Exception):
 
 # API Routes
 @api_router.get("/")
-async def root():
-    return {"message": "Real-Time Code Editor API"}
+async def api_root():
+    logger.info("API root endpoint accessed")
+    return {"message": "Real-Time Code Editor API", "endpoints": "/docs"}
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
+    logger.info(f"Creating status check for client: {input.client_name}")
     status_dict = input.dict()
     status_obj = StatusCheck(**status_dict)
     _ = await db.status_checks.insert_one(status_obj.dict())
+    logger.info(f"Status check created with ID: {status_obj.id}")
     return status_obj
 
 @api_router.get("/status", response_model=List[StatusCheck])
