@@ -78,29 +78,30 @@ class CodeSyncDebugTester:
     
     def test_root_endpoint_json_response(self):
         """Test GET / returns proper JSON response with backend info"""
+        # The root endpoint should be the backend root, not the frontend
         success, response, headers = self.run_test(
-            "Root Endpoint JSON Response",
+            "Backend Root Endpoint JSON Response",
             "GET",
-            "/",
+            "/api/",
             200
         )
         
         if success and isinstance(response, dict):
-            required_fields = ['message', 'status', 'version']
+            required_fields = ['message', 'endpoints']
             missing_fields = [field for field in required_fields if field not in response]
             if not missing_fields:
-                print("✅ Root endpoint returns proper JSON with required fields")
-                if response.get('message') == "CodeSync Real-Time Code Editor Backend":
-                    print("✅ Correct backend identification message")
+                print("✅ Backend root endpoint returns proper JSON with required fields")
+                if "Real-Time Code Editor API" in response.get('message', ''):
+                    print("✅ Correct backend API identification message")
                     return True
                 else:
-                    print("❌ Backend message not as expected")
+                    print("❌ Backend API message not as expected")
                     return False
             else:
                 print(f"❌ Missing required fields: {missing_fields}")
                 return False
         else:
-            print("❌ Root endpoint should return JSON object")
+            print("❌ Backend root endpoint should return JSON object")
             return False
 
     def test_health_endpoint_database_status(self):
