@@ -1,6 +1,6 @@
 # Real-Time Collaborative Code Editor
 
-[![Live Demo](https://a33c78eb-cd89-47f9-b620-5c307bf744cd.preview.emergentagent.com)
+[![Live Demo](https://000b0bdd-b788-4732-925f-a5806960ca4d.preview.emergentagent.com)
 [![Backend](https://img.shields.io/badge/Backend-FastAPI-green)](https://fastapi.tiangolo.com/)
 [![Frontend](https://img.shields.io/badge/Frontend-React-blue)](https://reactjs.org/)
 [![Database](https://img.shields.io/badge/Database-MongoDB-green)](https://www.mongodb.com/)
